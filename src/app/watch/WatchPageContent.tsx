@@ -10,48 +10,10 @@ import { AddMovieDialog } from '@/components/add-movie-dialog';
 import { Button } from '@/components/ui/button';
 import { Heart, Download, ListPlus, Share2, PlayCircle } from 'lucide-react';
 import { MovieList } from '@/components/movie-list';
-import { getYouTubeEmbedUrl, getYouTubeThumbnail, getYouTubeVideoId } from '@/lib/utils';
+import { getYouTubeEmbedUrl } from '@/lib/utils';
 import Image from 'next/image';
 import AdMobBanner from '@/components/admob-banner';
-
-const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
-
-
-async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[]> {
-  const videoIds = movies.map(movie => getYouTubeVideoId(movie.url)).filter(Boolean) as string[];
-  if (videoIds.length === 0 || !YOUTUBE_API_KEY) return movies;
-
-  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`;
-  
-  try {
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    if (data.items) {
-      const youtubeDataMap = new Map(data.items.map((item: any) => [item.id, item]));
-      
-      return movies.map(movie => {
-        const videoId = getYouTubeVideoId(movie.url);
-        if (videoId && youtubeDataMap.has(videoId)) {
-          const item = youtubeDataMap.get(videoId);
-          return {
-            ...movie,
-            title: item.snippet.title,
-            thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
-            channelTitle: item.snippet.channelTitle,
-            viewCount: item.statistics.viewCount,
-            publishedAt: item.snippet.publishedAt,
-          };
-        }
-        return movie;
-      });
-    }
-    return movies;
-  } catch (error) {
-    console.error("Error fetching YouTube data:", error);
-    return movies; // Return original movies if API fails
-  }
-}
+import { fetchYouTubeDataForMovies } from '@/lib/youtube';
 
 export default function WatchPageContent() {
   const searchParams = useSearchParams();

@@ -1,14 +1,14 @@
 "use client";
 
 import type { Movie } from "@/lib/types";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
-import { MovieList } from "@/components/movie-list";
-import AdMobBanner from "@/components/admob-banner";
 import { fetchYouTubeDataForMovies } from "@/lib/youtube";
+import { ShortsViewer } from "@/components/shorts-viewer";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ShortsPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -37,15 +37,6 @@ export default function ShortsPage() {
     return () => unsub();
   }, []);
 
-  const filteredMovies = useMemo(() => {
-    if (!searchQuery) {
-      return movies;
-    }
-    return movies.filter((movie) =>
-      movie.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [movies, searchQuery]);
-
   const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
     await addDoc(collection(db, "movies"), {
       ...movie,
@@ -54,38 +45,33 @@ export default function ShortsPage() {
     });
   };
 
+  const filteredMovies = movies.filter((movie) =>
+    movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
+    <div className="flex h-screen w-full flex-col bg-black text-foreground">
       <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
-      <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
-        <div className="container max-w-7xl mx-auto">
-           <h1 className="text-2xl font-bold mb-6">Shorts</h1>
-          {loading ? (
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-8">
-                {[...Array(12)].map((_, i) => (
-                    <div key={i} className="flex flex-col gap-2 animate-pulse">
-                        <div className="w-full aspect-video bg-muted rounded-lg"></div>
-                        <div className="flex gap-3">
-                           <div className="w-10 h-10 bg-muted rounded-full shrink-0"></div>
-                           <div className="flex-1 space-y-2">
-                                <div className="h-4 bg-muted rounded w-full"></div>
-                                <div className="h-4 bg-muted rounded w-2/3"></div>
-                           </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-          ) : (
-            <MovieList movies={filteredMovies} variant="grid-condensed" />
-          )}
-        </div>
+      <main className="flex-1 overflow-hidden">
+        {loading ? (
+          <div className="flex h-full w-full items-center justify-center">
+             <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-4">
+                <Skeleton className="w-full h-1/2 rounded-lg" />
+                <div className="w-full space-y-3">
+                  <Skeleton className="h-5 w-3/4 rounded-lg" />
+                  <Skeleton className="h-5 w-1/2 rounded-lg" />
+                </div>
+             </div>
+          </div>
+        ) : (
+          <ShortsViewer movies={filteredMovies} />
+        )}
       </main>
       <AddMovieDialog
         isOpen={isAddMovieOpen}
         onOpenChange={setAddMovieOpen}
         onMovieAdded={handleAddMovie}
       />
-      <AdMobBanner />
     </div>
   );
 }

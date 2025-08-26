@@ -28,7 +28,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       {movies.map((movie) => (
         <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center">
           <iframe
-            src={`${getYouTubeEmbedUrl(movie.url)}?autoplay=1&mute=1&controls=0&rel=0`}
+            src={`${getYouTubeEmbedUrl(movie.url)}?autoplay=1&controls=0&rel=0`}
             title={movie.title}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

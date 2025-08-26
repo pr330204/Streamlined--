@@ -35,11 +35,12 @@ export default function WatchPageContent() {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
+        const data = docSnap.data();
         const movieData = { 
           id: docSnap.id, 
-          ...docSnap.data(),
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie;
-        // The single movie object is not passed to the server action, so no conversion needed here.
         const [movieWithYTData] = await fetchYouTubeDataForMovies([movieData]);
         setMovie(movieWithYTData);
       } else {

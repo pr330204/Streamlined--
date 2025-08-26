@@ -4,7 +4,6 @@ import type { Movie } from "@/lib/types";
 import { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
-import { Input } from "@/components/ui/input";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { MovieList } from "@/components/movie-list";
@@ -15,7 +14,7 @@ const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
 
 async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[]> {
   const videoIds = movies.map(movie => getYouTubeVideoId(movie.url)).filter(Boolean) as string[];
-  if (videoIds.length === 0) return movies;
+  if (videoIds.length === 0 || !YOUTUBE_API_KEY) return movies;
 
   const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`;
   

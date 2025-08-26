@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
 import { MovieList } from "@/components/movie-list";
 import AdMobBanner from "@/components/admob-banner";
 import { fetchYouTubeDataForMovies } from "@/lib/youtube";
@@ -19,7 +19,14 @@ export default function Home() {
   useEffect(() => {
     const q = query(collection(db, "movies"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, async (snapshot) => {
-      const moviesFromDb = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Movie));
+      const moviesFromDb = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          id: doc.id, 
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
+        } as Movie
+      });
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesFromDb);
       setMovies(moviesWithYTData);
       setLoading(false);
@@ -38,7 +45,7 @@ export default function Home() {
   }, [movies, searchQuery]);
 
 
-  const handleAddMovie = async (movie: Omit<Movie, "id" | "votes">) => {
+  const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt">) => {
     await addDoc(collection(db, "movies"), {
       ...movie,
       votes: 0,

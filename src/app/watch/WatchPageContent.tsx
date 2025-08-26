@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { doc, getDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Movie } from '@/lib/types';
 import { Header } from '@/components/header';
@@ -35,7 +35,11 @@ export default function WatchPageContent() {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const movieData = { id: docSnap.id, ...docSnap.data() } as Movie;
+        const movieData = { 
+          id: docSnap.id, 
+          ...docSnap.data(),
+        } as Movie;
+        // The single movie object is not passed to the server action, so no conversion needed here.
         const [movieWithYTData] = await fetchYouTubeDataForMovies([movieData]);
         setMovie(movieWithYTData);
       } else {
@@ -50,7 +54,14 @@ export default function WatchPageContent() {
   useEffect(() => {
     const q = query(collection(db, "movies"), orderBy("votes", "desc"), limit(10));
     const unsub = onSnapshot(q, async (snapshot) => {
-      const moviesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Movie));
+      const moviesData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          id: doc.id, 
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
+        } as Movie;
+      });
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesData);
       setSuggestedMovies(moviesWithYTData);
     });

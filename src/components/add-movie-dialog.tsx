@@ -39,7 +39,7 @@ type AddMovieFormValues = z.infer<typeof formSchema>;
 interface AddMovieDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onMovieAdded: (movie: Omit<Movie, "id" | "votes">) => void;
+  onMovieAdded: (movie: Omit<Movie, "id" | "votes" | "createdAt">) => void;
 }
 
 const ADMIN_PASSWORD = "admin"; // Simple hardcoded password

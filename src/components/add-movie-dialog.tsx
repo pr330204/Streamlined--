@@ -42,7 +42,7 @@ interface AddMovieDialogProps {
   onMovieAdded: (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => void;
 }
 
-const ADMIN_PASSWORD = "admin"; // Simple hardcoded password
+const ADMIN_PASSWORD = "Prashant"; // Simple hardcoded password
 
 export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieDialogProps) {
   const [isPending, startTransition] = useTransition();

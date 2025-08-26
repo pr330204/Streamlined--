@@ -2,7 +2,7 @@
 'use server';
 
 import type { Movie } from './types';
-import { getYouTubeVideoId } from './utils';
+import { getYouTubeVideoId, parseISO8601Duration } from './utils';
 import fetch from 'node-fetch';
 
 const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
@@ -13,7 +13,7 @@ export async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[
     .filter(Boolean) as string[];
   if (videoIds.length === 0 || !YOUTUBE_API_KEY) return movies;
 
-  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds.join(
+  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds.join(
     ','
   )}&key=${YOUTUBE_API_KEY}`;
 
@@ -44,6 +44,7 @@ export async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[
             channelTitle: item.snippet.channelTitle,
             viewCount: item.statistics.viewCount,
             publishedAt: item.snippet.publishedAt,
+            duration: parseISO8601Duration(item.contentDetails.duration),
             channelThumbnailUrl: channelDataMap.get(videoId) || movie.channelThumbnailUrl,
           };
         }

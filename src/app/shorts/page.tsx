@@ -10,7 +10,7 @@ import { MovieList } from "@/components/movie-list";
 import AdMobBanner from "@/components/admob-banner";
 import { fetchYouTubeDataForMovies } from "@/lib/youtube";
 
-export default function Home() {
+export default function ShortsPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMovieOpen, setAddMovieOpen] = useState(false);
@@ -28,9 +28,9 @@ export default function Home() {
         } as Movie
       });
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesFromDb);
-      // Filter for videos longer than 5 minutes (300 seconds)
-      const longVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration > 300);
-      setMovies(longVideos);
+      // Filter for videos 5 minutes or shorter (<= 300 seconds)
+      const shortVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration <= 300);
+      setMovies(shortVideos);
       setLoading(false);
     });
 
@@ -46,7 +46,6 @@ export default function Home() {
     );
   }, [movies, searchQuery]);
 
-
   const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
     await addDoc(collection(db, "movies"), {
       ...movie,
@@ -60,6 +59,7 @@ export default function Home() {
       <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
       <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
         <div className="container max-w-7xl mx-auto">
+           <h1 className="text-2xl font-bold mb-6">Shorts</h1>
           {loading ? (
              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
                 {[...Array(8)].map((_, i) => (

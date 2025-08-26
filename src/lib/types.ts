@@ -12,4 +12,5 @@ export interface Movie {
   publishedAt?: string;
   thumbnailUrl?: string;
   channelThumbnailUrl?: string;
+  duration?: number; // Duration in seconds
 }

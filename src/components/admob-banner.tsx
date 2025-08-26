@@ -20,7 +20,7 @@ const AdMobBanner = () => {
    */
 
   return (
-    <div className="fixed bottom-0 left-0 w-full h-14 bg-black flex items-center justify-center text-white text-sm z-50 border-t border-gray-700">
+    <div className="fixed bottom-16 left-0 w-full h-14 bg-black flex items-center justify-center text-white text-sm z-40 border-t border-gray-700">
       <p>Ad Placeholder (AdMob Unit ID: {adUnitId})</p>
     </div>
   );

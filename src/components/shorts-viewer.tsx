@@ -2,7 +2,7 @@
 
 import type { Movie } from "@/lib/types";
 import { getYouTubeEmbedUrl } from "@/lib/utils";
-import { Heart, MessageCircle, Send, Download, MoreVertical, Music4 } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreVertical, Music4 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 
@@ -28,7 +28,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       {movies.map((movie) => (
         <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center">
           <iframe
-            src={`${getYouTubeEmbedUrl(movie.url)}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&loop=1&playlist=${movie.id}`}
+            src={`${getYouTubeEmbedUrl(movie.url)}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${getYouTubeVideoId(movie.url)}`}
             title={movie.title}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -86,4 +86,30 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       ))}
     </div>
   );
+}
+
+// Helper function to extract video ID, assuming it's also needed here.
+// You can move this to utils if it's used in more places.
+function getYouTubeVideoId(url: string): string | null {
+  if (!url) return null;
+  let videoId: string | null = null;
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.hostname === 'youtu.be') {
+      videoId = urlObj.pathname.slice(1);
+    } else if (urlObj.hostname.includes('youtube.com')) {
+      if (urlObj.pathname.startsWith('/embed/')) {
+        videoId = urlObj.pathname.split('/')[2];
+      } else {
+        videoId = urlObj.searchParams.get('v');
+      }
+    }
+  } catch (error) {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    if (match) {
+      videoId = match[1];
+    }
+  }
+  return videoId;
 }

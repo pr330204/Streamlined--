@@ -61,8 +61,8 @@ export default function ShortsPage() {
         <div className="container max-w-7xl mx-auto">
            <h1 className="text-2xl font-bold mb-6">Shorts</h1>
           {loading ? (
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
-                {[...Array(8)].map((_, i) => (
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-8">
+                {[...Array(12)].map((_, i) => (
                     <div key={i} className="flex flex-col gap-2 animate-pulse">
                         <div className="w-full aspect-video bg-muted rounded-lg"></div>
                         <div className="flex gap-3">
@@ -76,7 +76,7 @@ export default function ShortsPage() {
                 ))}
             </div>
           ) : (
-            <MovieList movies={filteredMovies} />
+            <MovieList movies={filteredMovies} variant="grid-condensed" />
           )}
         </div>
       </main>

@@ -2,13 +2,14 @@
 "use client";
 
 import type { Movie } from "@/lib/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
 import { ShortsViewer } from "@/components/shorts-viewer";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getYouTubeVideoId } from "@/lib/utils";
 
 export default function ShortsPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -42,9 +43,18 @@ export default function ShortsPage() {
     });
   };
 
-  const filteredMovies = movies.filter((movie) =>
-    movie.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMovies = useMemo(() => {
+    // First, filter out any non-YouTube videos
+    const youtubeMovies = movies.filter(movie => getYouTubeVideoId(movie.url));
+    
+    // Then, filter by search query
+    if (!searchQuery) {
+      return youtubeMovies;
+    }
+    return youtubeMovies.filter((movie) =>
+      movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [movies, searchQuery]);
 
   return (
     <div className="flex h-screen w-full flex-col bg-black text-foreground">

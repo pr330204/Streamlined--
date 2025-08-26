@@ -35,6 +35,11 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
   const playerId = `ytplayer-${videoId}-${Math.random().toString(36).substring(2, 9)}`;
 
   useEffect(() => {
+    if (!videoId) {
+      console.error("Invalid video URL, cannot create player:", videoUrl);
+      return;
+    }
+
     const createPlayer = () => {
       // Ensure the target element exists before creating a player
       if (!document.getElementById(playerId)) return;
@@ -78,7 +83,7 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId, playerId]);
+  }, [videoId, playerId, videoUrl]);
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent click from bubbling up
@@ -92,6 +97,14 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
         }
     }
   };
+
+  if (!videoId) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-black text-white">
+        <p>Invalid video URL.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute top-0 left-0 w-full h-full">

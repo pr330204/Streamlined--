@@ -2,17 +2,20 @@
 "use client";
 
 import type { Movie } from "@/lib/types";
-import { Heart, MessageCircle, Send, MoreVertical, Music4 } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreVertical, Music4, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
 import { formatRelativeTime, getYouTubeVideoId } from "@/lib/utils";
+import { useRef, useState } from "react";
 
 interface ReelsViewerProps {
   reels: Movie[];
 }
 
 export function ReelsViewer({ reels }: ReelsViewerProps) {
+  const [isMuted, setIsMuted] = useState(true);
+  const playerRef = useRef<any>(null);
 
   if (reels.length === 0) {
     return (
@@ -28,11 +31,32 @@ export function ReelsViewer({ reels }: ReelsViewerProps) {
   // Filter out any non-youtube videos just in case
   const youtubeReels = reels.filter(reel => getYouTubeVideoId(reel.url));
 
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent click from bubbling up
+    if (playerRef.current && typeof playerRef.current.isMuted === 'function') {
+        if (playerRef.current.isMuted()) {
+            playerRef.current.unMute();
+            setIsMuted(false);
+        } else {
+            playerRef.current.mute();
+            setIsMuted(true);
+        }
+    }
+  };
+
   return (
     <div className="h-full w-full overflow-y-auto snap-y snap-mandatory">
       {youtubeReels.map((reel) => (
         <div key={reel.id} className="h-full w-full snap-start relative flex items-center justify-center bg-black">
-          <YouTubePlayer videoUrl={reel.url} />
+          <YouTubePlayer videoUrl={reel.url} playerRef={playerRef} />
+
+          <div 
+            onClick={toggleMute}
+            className="absolute bottom-24 right-2 z-10 p-2 bg-black/50 rounded-full text-white cursor-pointer"
+            aria-label={isMuted ? "Unmute" : "Mute"}
+        >
+            {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+        </div>
 
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/60 to-transparent">
              <div className="flex items-end">

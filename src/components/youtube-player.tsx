@@ -1,12 +1,13 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { getYouTubeVideoId } from '@/lib/utils';
 import { Volume2, VolumeX } from 'lucide-react';
 
 interface YouTubePlayerProps {
   videoUrl: string;
+  playerRef: React.MutableRefObject<any>;
 }
 
 declare global {
@@ -27,10 +28,9 @@ if (typeof window !== 'undefined') {
 }
 
 
-export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
-  const playerRef = useRef<any>(null);
+export function YouTubePlayer({ videoUrl, playerRef }: YouTubePlayerProps) {
+  const internalPlayerRef = useRef<any>(null);
   const videoId = getYouTubeVideoId(videoUrl);
-  const [isMuted, setIsMuted] = useState(true);
   
   const playerId = `ytplayer-${videoId}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -44,10 +44,10 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
       // Ensure the target element exists before creating a player
       if (!document.getElementById(playerId)) return;
       
-      if (playerRef.current) {
-        playerRef.current.destroy();
+      if (internalPlayerRef.current) {
+        internalPlayerRef.current.destroy();
       }
-      playerRef.current = new window.YT.Player(playerId, {
+      const player = new window.YT.Player(playerId, {
         height: '100%',
         width: '100%',
         videoId: videoId,
@@ -64,6 +64,10 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
         events: {
           'onReady': (event: any) => {
              event.target.playVideo();
+             internalPlayerRef.current = event.target;
+             if (playerRef) {
+                playerRef.current = event.target;
+             }
           },
         }
       });
@@ -78,25 +82,14 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
     }
     
     return () => {
-        if (playerRef.current && typeof playerRef.current.destroy === 'function') {
-            playerRef.current.destroy();
+        const player = internalPlayerRef.current;
+        if (player && typeof player.destroy === 'function') {
+            player.destroy();
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, playerId, videoUrl]);
 
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent click from bubbling up
-    if (playerRef.current && typeof playerRef.current.isMuted === 'function') {
-        if (playerRef.current.isMuted()) {
-            playerRef.current.unMute();
-            setIsMuted(false);
-        } else {
-            playerRef.current.mute();
-            setIsMuted(true);
-        }
-    }
-  };
 
   if (!videoId) {
     return (
@@ -109,13 +102,6 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
   return (
     <div className="absolute top-0 left-0 w-full h-full">
         <div id={playerId} className="w-full h-full" />
-        <div 
-            onClick={toggleMute}
-            className="absolute bottom-24 right-2 z-10 p-2 bg-black/50 rounded-full text-white cursor-pointer"
-            aria-label={isMuted ? "Unmute" : "Mute"}
-        >
-            {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-        </div>
     </div>
   );
 }

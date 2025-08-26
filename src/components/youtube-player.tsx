@@ -39,6 +39,8 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
           showinfo: 0,
           mute: 1,
           playsinline: 1,
+          loop: 1,
+          playlist: videoId, // Required for loop to work
         },
         events: {
           'onReady': (event: any) => {
@@ -67,7 +69,8 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
     }
   }, [videoId, playerId]);
 
-  const toggleMute = () => {
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent click from bubbling up
     if (playerRef.current && typeof playerRef.current.isMuted === 'function') {
         if (playerRef.current.isMuted()) {
             playerRef.current.unMute();
@@ -80,21 +83,15 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
   };
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full" onClick={toggleMute}>
-        <div id={playerId} className="w-full h-full pointer-events-none" />
+    <div className="absolute top-0 left-0 w-full h-full">
+        <div id={playerId} className="w-full h-full" />
         <div 
+            onClick={toggleMute}
             className="absolute bottom-24 right-2 z-10 p-2 bg-black/50 rounded-full text-white cursor-pointer"
             aria-label={isMuted ? "Unmute" : "Mute"}
         >
             {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
         </div>
-        {isMuted && (
-           <div className="absolute inset-0 flex items-center justify-center bg-transparent pointer-events-none">
-                <div className="flex flex-col items-center text-white bg-black/50 p-4 rounded-full">
-                    <VolumeX className="h-8 w-8" />
-                </div>
-            </div>
-        )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Film } from 'lucide-react';
+import { Home, Clapperboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function BottomNav() {
@@ -11,7 +11,7 @@ export function BottomNav() {
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/reels', label: 'Reels', icon: Film },
+    { href: '/shorts', label: 'Shorts', icon: Clapperboard },
   ];
 
   return (

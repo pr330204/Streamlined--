@@ -1,10 +1,10 @@
 "use client";
 
 import type { Movie } from "@/lib/types";
-import { getYouTubeEmbedUrl } from "@/lib/utils";
 import { Heart, MessageCircle, Send, MoreVertical, Music4 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
+import { YouTubePlayer } from "./youtube-player";
 
 interface ShortsViewerProps {
   movies: Movie[];
@@ -26,15 +26,8 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
   return (
     <div className="h-full w-full overflow-y-auto snap-y snap-mandatory">
       {movies.map((movie) => (
-        <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center">
-          <iframe
-            src={`${getYouTubeEmbedUrl(movie.url)}?autoplay=1&controls=0&rel=0&playsinline=1`}
-            title={movie.title}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="absolute top-0 left-0 w-full h-full"
-          ></iframe>
+        <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center bg-black">
+          <YouTubePlayer videoUrl={movie.url} />
 
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/60 to-transparent">
              <div className="flex items-end">
@@ -86,33 +79,4 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       ))}
     </div>
   );
-}
-
-// Helper function to extract video ID, assuming it's also needed here.
-// You can move this to utils if it's used in more places.
-function getYouTubeVideoId(url: string): string | null {
-  if (!url) return null;
-  let videoId: string | null = null;
-  try {
-    const urlObj = new URL(url);
-    if (urlObj.hostname === 'youtu.be') {
-      videoId = urlObj.pathname.slice(1);
-    } else if (urlObj.hostname.includes('youtube.com')) {
-      if (urlObj.pathname.startsWith('/embed/')) {
-        videoId = urlObj.pathname.split('/')[2];
-      } else if (urlObj.pathname.startsWith('/shorts/')) {
-        videoId = urlObj.pathname.split('/')[2];
-      }
-      else {
-        videoId = urlObj.searchParams.get('v');
-      }
-    }
-  } catch (error) {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const match = url.match(regex);
-    if (match) {
-      videoId = match[1];
-    }
-  }
-  return videoId;
 }

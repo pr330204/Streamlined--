@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { BottomNav } from '@/components/bottom-nav';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'Streamlined',
@@ -27,6 +28,7 @@ export default function RootLayout({
         </div>
         <Toaster />
         <BottomNav />
+        <Script src="https://www.youtube.com/iframe_api" strategy="afterInteractive" />
       </body>
     </html>
   );

@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Movie } from "@/lib/types";
@@ -6,7 +7,6 @@ import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
-import { fetchYouTubeDataForMovies } from "@/lib/youtube";
 import { ShortsViewer } from "@/components/shorts-viewer";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -27,10 +27,7 @@ export default function ShortsPage() {
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
       });
-      const moviesWithYTData = await fetchYouTubeDataForMovies(moviesFromDb);
-      // Filter for videos 5 minutes or shorter (<= 300 seconds)
-      const shortVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration <= 300);
-      setMovies(shortVideos);
+      setMovies(moviesFromDb);
       setLoading(false);
     });
 

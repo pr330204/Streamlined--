@@ -15,13 +15,16 @@ export function getYouTubeVideoId(url: string): string | null {
     } else if (urlObj.hostname.includes('youtube.com')) {
       if (urlObj.pathname.startsWith('/embed/')) {
         videoId = urlObj.pathname.split('/')[2];
-      } else {
+      } else if (urlObj.pathname.startsWith('/shorts/')) {
+        videoId = urlObj.pathname.split('/')[2];
+      }
+      else {
         videoId = urlObj.searchParams.get('v');
       }
     }
   } catch (error) {
     // Attempt to parse non-URL strings
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(regex);
     if (match) {
       videoId = match[1];

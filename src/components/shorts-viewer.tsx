@@ -28,7 +28,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       {movies.map((movie) => (
         <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center">
           <iframe
-            src={`${getYouTubeEmbedUrl(movie.url)}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${getYouTubeVideoId(movie.url)}`}
+            src={`${getYouTubeEmbedUrl(movie.url)}?autoplay=1&mute=1&controls=0&rel=0`}
             title={movie.title}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -100,12 +100,15 @@ function getYouTubeVideoId(url: string): string | null {
     } else if (urlObj.hostname.includes('youtube.com')) {
       if (urlObj.pathname.startsWith('/embed/')) {
         videoId = urlObj.pathname.split('/')[2];
-      } else {
+      } else if (urlObj.pathname.startsWith('/shorts/')) {
+        videoId = urlObj.pathname.split('/')[2];
+      }
+      else {
         videoId = urlObj.searchParams.get('v');
       }
     }
   } catch (error) {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(regex);
     if (match) {
       videoId = match[1];

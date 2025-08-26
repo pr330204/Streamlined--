@@ -13,8 +13,19 @@ declare global {
     interface Window {
       onYouTubeIframeAPIReady: () => void;
       YT: any;
+      ytPlayerQueue: (() => void)[];
     }
 }
+
+// Initialize the queue if it doesn't exist
+if (typeof window !== 'undefined') {
+  window.ytPlayerQueue = window.ytPlayerQueue || [];
+  window.onYouTubeIframeAPIReady = () => {
+    window.ytPlayerQueue.forEach(playerFn => playerFn());
+    window.ytPlayerQueue = []; // Clear the queue after processing
+  };
+}
+
 
 export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
   const playerRef = useRef<any>(null);
@@ -25,6 +36,9 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
 
   useEffect(() => {
     const createPlayer = () => {
+      // Ensure the target element exists before creating a player
+      if (!document.getElementById(playerId)) return;
+      
       if (playerRef.current) {
         playerRef.current.destroy();
       }
@@ -50,16 +64,12 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
       });
     };
 
-    if (!window.YT) {
-      window.onYouTubeIframeAPIReady = () => {
-        if(document.getElementById(playerId)) {
-            createPlayer();
-        }
-      };
+    if (!window.YT || !window.YT.Player) {
+       // If the API isn't ready, push the createPlayer function to the queue
+       window.ytPlayerQueue.push(createPlayer);
     } else {
-        if(document.getElementById(playerId)) {
-           createPlayer();
-        }
+       // If the API is already loaded, create the player immediately
+       createPlayer();
     }
     
     return () => {
@@ -67,6 +77,7 @@ export function YouTubePlayer({ videoUrl }: YouTubePlayerProps) {
             playerRef.current.destroy();
         }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, playerId]);
 
   const toggleMute = (e: React.MouseEvent) => {

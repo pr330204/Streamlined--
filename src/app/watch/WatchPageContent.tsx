@@ -10,31 +10,72 @@ import { AddMovieDialog } from '@/components/add-movie-dialog';
 import { Button } from '@/components/ui/button';
 import { Heart, Download, ListPlus, Share2, PlayCircle } from 'lucide-react';
 import { MovieList } from '@/components/movie-list';
-import { getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/lib/utils';
+import { getYouTubeEmbedUrl, getYouTubeThumbnail, getYouTubeVideoId } from '@/lib/utils';
 import Image from 'next/image';
 import AdMobBanner from '@/components/admob-banner';
 
+const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+
+
+async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[]> {
+  const videoIds = movies.map(movie => getYouTubeVideoId(movie.url)).filter(Boolean) as string[];
+  if (videoIds.length === 0) return movies;
+
+  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`;
+  
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    if (data.items) {
+      const youtubeDataMap = new Map(data.items.map((item: any) => [item.id, item]));
+      
+      return movies.map(movie => {
+        const videoId = getYouTubeVideoId(movie.url);
+        if (videoId && youtubeDataMap.has(videoId)) {
+          const item = youtubeDataMap.get(videoId);
+          return {
+            ...movie,
+            title: item.snippet.title,
+            thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+            channelTitle: item.snippet.channelTitle,
+            viewCount: item.statistics.viewCount,
+            publishedAt: item.snippet.publishedAt,
+          };
+        }
+        return movie;
+      });
+    }
+    return movies;
+  } catch (error) {
+    console.error("Error fetching YouTube data:", error);
+    return movies; // Return original movies if API fails
+  }
+}
+
 export default function WatchPageContent() {
   const searchParams = useSearchParams();
-  const videoId = searchParams.get('v');
+  const docId = searchParams.get('v');
   const [movie, setMovie] = useState<Movie | null>(null);
   const [suggestedMovies, setSuggestedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMovieOpen, setAddMovieOpen] = useState(false);
 
   useEffect(() => {
-    if (!videoId) {
+    if (!docId) {
       setLoading(false);
       return;
     }
 
     const fetchMovie = async () => {
       setLoading(true);
-      const docRef = doc(db, 'movies', videoId);
+      const docRef = doc(db, 'movies', docId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setMovie({ id: docSnap.id, ...docSnap.data() } as Movie);
+        const movieData = { id: docSnap.id, ...docSnap.data() } as Movie;
+        const [movieWithYTData] = await fetchYouTubeDataForMovies([movieData]);
+        setMovie(movieWithYTData);
       } else {
         console.log('No such document!');
       }
@@ -42,13 +83,14 @@ export default function WatchPageContent() {
     };
 
     fetchMovie();
-  }, [videoId]);
+  }, [docId]);
 
   useEffect(() => {
     const q = query(collection(db, "movies"), orderBy("votes", "desc"), limit(10));
-    const unsub = onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, async (snapshot) => {
       const moviesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Movie));
-      setSuggestedMovies(moviesData);
+      const moviesWithYTData = await fetchYouTubeDataForMovies(moviesData);
+      setSuggestedMovies(moviesWithYTData);
     });
 
     return () => unsub();
@@ -61,14 +103,6 @@ export default function WatchPageContent() {
     }
     return null;
   }, [movie?.url]);
-
-  const thumbnailUrl = useMemo(() => {
-      if(movie?.url) {
-        return getYouTubeThumbnail(movie.url);
-      }
-      return null;
-  }, [movie?.url]);
-
 
   if (loading) {
     return (
@@ -153,7 +187,7 @@ export default function WatchPageContent() {
             </div>
             <div className="w-24 shrink-0">
                 <Image 
-                    src={thumbnailUrl || 'https://placehold.co/96x144.png'}
+                    src={movie.thumbnailUrl || 'https://placehold.co/96x144.png'}
                     alt={`Poster for ${movie.title}`}
                     width={96}
                     height={144}

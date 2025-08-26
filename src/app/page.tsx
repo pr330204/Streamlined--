@@ -9,6 +9,45 @@ import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { MovieList } from "@/components/movie-list";
 import AdMobBanner from "@/components/admob-banner";
+import { getYouTubeVideoId } from "@/lib/utils";
+
+const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+
+async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[]> {
+  const videoIds = movies.map(movie => getYouTubeVideoId(movie.url)).filter(Boolean) as string[];
+  if (videoIds.length === 0) return movies;
+
+  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`;
+  
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    if (data.items) {
+      const youtubeDataMap = new Map(data.items.map((item: any) => [item.id, item]));
+      
+      return movies.map(movie => {
+        const videoId = getYouTubeVideoId(movie.url);
+        if (videoId && youtubeDataMap.has(videoId)) {
+          const item = youtubeDataMap.get(videoId);
+          return {
+            ...movie,
+            title: item.snippet.title,
+            thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+            channelTitle: item.snippet.channelTitle,
+            viewCount: item.statistics.viewCount,
+            publishedAt: item.snippet.publishedAt,
+          };
+        }
+        return movie;
+      });
+    }
+    return movies;
+  } catch (error) {
+    console.error("Error fetching YouTube data:", error);
+    return movies; // Return original movies if API fails
+  }
+}
 
 export default function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -18,9 +57,10 @@ export default function Home() {
 
   useEffect(() => {
     const q = query(collection(db, "movies"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const moviesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Movie));
-      setMovies(moviesData);
+    const unsub = onSnapshot(q, async (snapshot) => {
+      const moviesFromDb = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Movie));
+      const moviesWithYTData = await fetchYouTubeDataForMovies(moviesFromDb);
+      setMovies(moviesWithYTData);
       setLoading(false);
     });
 

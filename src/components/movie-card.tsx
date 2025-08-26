@@ -3,8 +3,8 @@
 import type { Movie } from "@/lib/types";
 import Image from 'next/image';
 import Link from 'next/link';
-import { getYouTubeThumbnail } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatNumber, formatRelativeTime } from "@/lib/utils";
 
 interface MovieCardProps {
   movie: Movie;
@@ -12,15 +12,17 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
-  const thumbnailUrl = getYouTubeThumbnail(movie.url);
-  const channelLetter = movie.title ? movie.title.charAt(0).toUpperCase() : 'U';
+  const channelLetter = movie.channelTitle ? movie.channelTitle.charAt(0).toUpperCase() : 'U';
+  
+  const formattedViews = movie.viewCount ? formatNumber(parseInt(movie.viewCount, 10)) : null;
+  const formattedDate = movie.publishedAt ? formatRelativeTime(movie.publishedAt) : null;
 
   if (variant === 'list') {
     return (
        <Link href={`/watch?v=${movie.id}`} className="flex gap-3 group">
           <div className="w-40 aspect-video overflow-hidden rounded-lg shrink-0">
              <Image
-                src={thumbnailUrl || "https://placehold.co/160x90.png"}
+                src={movie.thumbnailUrl || "https://placehold.co/160x90.png"}
                 alt={`Thumbnail for ${movie.title}`}
                 width={160}
                 height={90}
@@ -30,8 +32,12 @@ export function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
           </div>
           <div>
              <h3 className="font-semibold leading-snug line-clamp-2 text-sm">{movie.title}</h3>
-             <p className="text-xs text-muted-foreground mt-1">Streamlined</p>
-             <p className="text-xs text-muted-foreground">{movie.votes} votes</p>
+             <p className="text-xs text-muted-foreground mt-1">{movie.channelTitle || 'Streamlined'}</p>
+             <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                {formattedViews && <span>{formattedViews} views</span>}
+                {formattedViews && formattedDate && <span>•</span>}
+                {formattedDate && <span>{formattedDate}</span>}
+             </div>
           </div>
        </Link>
     );
@@ -42,7 +48,7 @@ export function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
     <Link href={`/watch?v=${movie.id}`} className="group">
         <div className="aspect-video overflow-hidden rounded-lg">
           <Image
-            src={thumbnailUrl || "https://placehold.co/400x225.png"}
+            src={movie.thumbnailUrl || "https://placehold.co/400x225.png"}
             alt={`Thumbnail for ${movie.title}`}
             width={400}
             height={225}
@@ -52,13 +58,17 @@ export function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
         </div>
         <div className="flex gap-3 mt-2">
            <Avatar className="h-9 w-9 mt-0.5">
-               <AvatarImage src="https://placehold.co/36x36.png" data-ai-hint="logo" />
+               <AvatarImage src={movie.channelThumbnailUrl || "https://placehold.co/36x36.png"} data-ai-hint="logo" />
                <AvatarFallback>{channelLetter}</AvatarFallback>
            </Avatar>
            <div className="flex-grow">
               <h3 className="font-semibold leading-snug line-clamp-2 text-sm">{movie.title}</h3>
-              <p className="text-xs text-muted-foreground mt-1">Streamlined</p>
-              <p className="text-xs text-muted-foreground">{movie.votes} votes</p>
+              <p className="text-xs text-muted-foreground mt-1">{movie.channelTitle || 'Streamlined'}</p>
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                {formattedViews && <span>{formattedViews} views</span>}
+                {formattedViews && formattedDate && <span>•</span>}
+                {formattedDate && <span>{formattedDate}</span>}
+             </div>
            </div>
         </div>
     </Link>

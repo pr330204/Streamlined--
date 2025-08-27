@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Clapperboard } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function BottomNav() {
@@ -11,12 +11,11 @@ export function BottomNav() {
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/shorts', label: 'Shorts', icon: Clapperboard },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-card border-t border-border/40">
-      <div className="grid h-full max-w-lg grid-cols-2 mx-auto font-medium">
+      <div className="grid h-full max-w-lg grid-cols-1 mx-auto font-medium">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (

@@ -1,84 +1,118 @@
 
 "use client";
 
-import type { Movie } from "@/lib/types";
-import { useState, useEffect, useMemo } from "react";
-import { Header } from "@/components/header";
-import { AddMovieDialog } from "@/components/add-movie-dialog";
-import { db } from "@/lib/firebase";
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
-import { ShortsViewer } from "@/components/shorts-viewer";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getYouTubeVideoId } from "@/lib/utils";
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { fetchShortsAction } from "@/lib/actions";
+import { Loader2 } from "lucide-react";
+
+interface YouTubeShort {
+  id: {
+    videoId: string;
+  };
+  snippet: {
+    title: string;
+  };
+}
+
+function ShortCard({ item }: { item: YouTubeShort }) {
+  const videoId = item.id.videoId;
+  return (
+    <section className="h-[calc(100vh-56px)] w-full flex items-center justify-center relative snap-center">
+      <div className="w-[360px] h-[640px] max-w-[92vw] max-h-[94vh] rounded-lg overflow-hidden relative bg-black shadow-lg">
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${videoId}`}
+          frameBorder="0"
+          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full"
+        ></iframe>
+        <div className="absolute right-2 bottom-28 flex flex-col gap-4 items-center z-10">
+          <div className="w-12 h-12 rounded-full bg-black/40 flex items-center justify-center text-xl">👍</div>
+          <div className="w-12 h-12 rounded-full bg-black/40 flex items-center justify-center text-xl">💬</div>
+          <div className="w-12 h-12 rounded-full bg-black/40 flex items-center justify-center text-xl">↗️</div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function ShortsPage() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAddMovieOpen, setAddMovieOpen] = useState(false);
+  const [shorts, setShorts] = useState<YouTubeShort[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
-  useEffect(() => {
-    const q = query(collection(db, "movies"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, async (snapshot) => {
-      const moviesFromDb = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return { 
-          id: doc.id, 
-          ...data,
-          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
-        } as Movie
-      });
-      setMovies(moviesFromDb);
+  const handleFetchShorts = useCallback(async (query: string, pageToken: string | null) => {
+    setLoading(true);
+    try {
+      const result = await fetchShortsAction(query, pageToken);
+      if (result.success && result.data) {
+        setShorts(prev => pageToken ? [...prev, ...result.data.items] : result.data.items);
+        setNextPageToken(result.data.nextPageToken || null);
+      } else {
+        console.error(result.message);
+        alert('Error fetching videos. Please check the API key and quota in your .env file.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('An unexpected error occurred.');
+    } finally {
       setLoading(false);
-    });
+      if(initialLoad) setInitialLoad(false);
+    }
+  }, [initialLoad]);
 
-    return () => unsub();
-  }, []);
-
-  const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
-    await addDoc(collection(db, "movies"), {
-      ...movie,
-      votes: 0,
-      createdAt: serverTimestamp(),
-    });
+  const handleSearch = () => {
+    setShorts([]);
+    setNextPageToken(null);
+    handleFetchShorts(searchQuery || 'shorts', null);
   };
 
-  const filteredMovies = useMemo(() => {
-    // First, filter out any non-YouTube videos
-    const youtubeMovies = movies.filter(movie => getYouTubeVideoId(movie.url));
-    
-    // Then, filter by search query
-    if (!searchQuery) {
-      return youtubeMovies;
-    }
-    return youtubeMovies.filter((movie) =>
-      movie.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [movies, searchQuery]);
+  useEffect(() => {
+    handleFetchShorts('shorts', null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div className="flex h-screen w-full flex-col bg-black text-foreground">
-      <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
-      <main className="flex-1 overflow-hidden">
-        {loading ? (
-          <div className="flex h-full w-full items-center justify-center">
-             <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-4">
-                <Skeleton className="w-full h-1/2 rounded-lg" />
-                <div className="w-full space-y-3">
-                  <Skeleton className="h-5 w-3/4 rounded-lg" />
-                  <Skeleton className="h-5 w-1/2 rounded-lg" />
-                </div>
-             </div>
-          </div>
+    <div className="h-screen w-full flex flex-col bg-black text-white">
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between px-4 bg-gradient-to-b from-black/60 to-transparent">
+        <h1 className="text-xl font-bold">Shorts</h1>
+        <div className="flex gap-2">
+          <Input 
+            placeholder="Search..." 
+            className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <Button onClick={handleSearch} variant="destructive">Search</Button>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto snap-y snap-mandatory">
+        {initialLoad && loading ? (
+           <div className="flex h-full w-full items-center justify-center text-lg">
+             <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Loading Shorts...
+           </div>
+        ) : shorts.length > 0 ? (
+          shorts.map((item) => <ShortCard key={item.id.videoId} item={item} />)
         ) : (
-          <ShortsViewer movies={filteredMovies} />
+          <div className="flex h-full w-full items-center justify-center text-lg text-gray-400">
+            No results found.
+          </div>
         )}
       </main>
-      <AddMovieDialog
-        isOpen={isAddMovieOpen}
-        onOpenChange={setAddMovieOpen}
-        onMovieAdded={handleAddMovie}
-      />
+
+      {nextPageToken && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <Button onClick={() => handleFetchShorts(searchQuery || 'shorts', nextPageToken)} disabled={loading}>
+            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</> : "Load More"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

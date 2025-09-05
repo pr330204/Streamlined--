@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import type { Movie } from "@/lib/types";
-import { Heart, MessageCircle, Send, MoreVertical, Music4, VolumeX, Volume2 } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, VolumeX, Volume2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
@@ -65,50 +65,54 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
               {isMuted[index] ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
           </div>
+          
+          <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">
+            <div className="flex flex-col items-center text-white">
+              <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 hover:bg-black/70">
+                <ThumbsUp className="h-6 w-6" />
+              </Button>
+              <span className="text-xs font-semibold mt-1">619K</span>
+            </div>
+            <div className="flex flex-col items-center text-white">
+              <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 hover:bg-black/70">
+                <ThumbsDown className="h-6 w-6" />
+              </Button>
+              <span className="text-xs font-semibold mt-1">Dislike</span>
+            </div>
+            <div className="flex flex-col items-center text-white">
+              <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 hover:bg-black/70">
+                <MessageCircle className="h-6 w-6" />
+              </Button>
+              <span className="text-xs font-semibold mt-1">1,874</span>
+            </div>
+            <div className="flex flex-col items-center text-white">
+              <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 hover:bg-black/70">
+                <Share2 className="h-6 w-6" />
+              </Button>
+              <span className="text-xs font-semibold mt-1">Share</span>
+            </div>
+            <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 hover:bg-black/70">
+              <MoreVertical className="h-6 w-6" />
+            </Button>
+            <Avatar className="h-10 w-10 border-2 border-white animate-spin-slow">
+              <AvatarImage src={movie.channelThumbnailUrl} data-ai-hint="album art" />
+            </Avatar>
+          </div>
 
-          <div className="absolute bottom-28 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/60 to-transparent">
-             <div className="flex items-end">
-                <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                        <Avatar className="h-9 w-9 border-2 border-white">
-                            <AvatarImage src={movie.channelThumbnailUrl} />
-                            <AvatarFallback>{movie.channelTitle?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-semibold text-sm">{movie.channelTitle}</span>
-                        <Button size="sm" className="h-7 text-xs bg-white text-black font-bold rounded-lg hover:bg-white/90">Follow</Button>
-                    </div>
-                    <p className="text-sm line-clamp-2">{movie.title}</p>
-                    <div className="flex items-center gap-2">
-                        <Music4 className="h-4 w-4" />
-                        <p className="text-xs truncate">Original audio - {movie.channelTitle}</p>
-                    </div>
-                </div>
-
-                <div className="flex flex-col items-center space-y-4">
-                     <div className="flex flex-col items-center">
-                        <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-white hover:bg-white/20 hover:text-white">
-                           <Heart className="h-7 w-7" />
-                        </Button>
-                        <span className="text-xs font-semibold">91.1k</span>
-                     </div>
-                     <div className="flex flex-col items-center">
-                        <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-white hover:bg-white/20 hover:text-white">
-                           <MessageCircle className="h-7 w-7" />
-                        </Button>
-                        <span className="text-xs font-semibold">337</span>
-                     </div>
-                      <div className="flex flex-col items-center">
-                        <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-white hover:bg-white/20 hover:text-white">
-                           <Send className="h-7 w-7" />
-                        </Button>
-                        <span className="text-xs font-semibold">5,857</span>
-                     </div>
-                     <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-white hover:bg-white/20 hover:text-white">
-                        <MoreVertical className="h-7 w-7" />
-                     </Button>
-                      <Avatar className="h-10 w-10 border-2 border-white animate-spin-slow">
+          <div className="absolute bottom-16 left-0 p-4 text-white bg-gradient-to-t from-black/60 to-transparent w-full">
+             <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                    <Avatar className="h-9 w-9">
                         <AvatarImage src={movie.channelThumbnailUrl} />
-                      </Avatar>
+                        <AvatarFallback>{movie.channelTitle?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-semibold text-sm">@{movie.channelTitle?.toLowerCase().replace(/\s/g, '_')}</span>
+                    <Button size="sm" className="h-8 text-sm bg-white text-black font-bold rounded-full hover:bg-white/90 px-4">Subscribe</Button>
+                </div>
+                <p className="text-sm line-clamp-2">{movie.title}</p>
+                <div className="flex items-center gap-2">
+                    <Music4 className="h-4 w-4" />
+                    <p className="text-xs truncate">Original audio - {movie.channelTitle}</p>
                 </div>
              </div>
           </div>

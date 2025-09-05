@@ -86,14 +86,8 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
   }, [videoId, playerId]);
 
   useEffect(() => {
-    if (!isReady) return;
     const player = playerRef.current;
-
-    // This check is crucial to prevent the error.
-    // It ensures we do not try to control the player until the ref is assigned.
-    if (!player || typeof player.playVideo !== 'function' || typeof player.pauseVideo !== 'function') {
-      return;
-    }
+    if (!isReady || !player) return;
 
     if (isPlaying) {
       player.playVideo();
@@ -103,13 +97,8 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
   }, [isPlaying, isReady, playerRef]);
 
   useEffect(() => {
-    if (!isReady) return;
     const player = playerRef.current;
-
-    // Add the same crucial check here for mute/unmute.
-    if (!player || typeof player.mute !== 'function' || typeof player.unMute !== 'function') {
-      return;
-    }
+    if (!isReady || !player) return;
 
     if (isMuted) {
       player.mute();

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import type { Movie } from "@/lib/types";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -13,13 +13,12 @@ interface ShortsViewerProps {
 }
 
 export function ShortsViewer({ movies }: ShortsViewerProps) {
-  const [playerRefs, setPlayerRefs] = useState<React.MutableRefObject<any>[]>([]);
+  const playerRefs = useMemo(() => movies.map(() => React.createRef<any>()), [movies]);
   const [isMuted, setIsMuted] = useState(true);
   const [activePlayerIndex, setActivePlayerIndex] = useState<number | null>(0);
   const videoRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    setPlayerRefs(movies.map(() => React.createRef()));
     videoRefs.current = movies.map(() => null);
   }, [movies]);
 
@@ -27,21 +26,24 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
           if (entry.isIntersecting) {
-            setActivePlayerIndex(index);
+            const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
+            if (index !== -1) {
+              setActivePlayerIndex(index);
+            }
           }
         });
       },
       { threshold: 0.7 }
     );
 
-    videoRefs.current.forEach(ref => {
+    const currentVideoRefs = videoRefs.current;
+    currentVideoRefs.forEach(ref => {
       if (ref) observer.observe(ref);
     });
 
     return () => {
-      videoRefs.current.forEach(ref => {
+      currentVideoRefs.forEach(ref => {
         if (ref) observer.unobserve(ref);
       });
     };

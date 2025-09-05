@@ -83,11 +83,11 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId, playerId, isMuted]);
+  }, [videoId, playerId]);
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!isReady || !player) return;
+    if (!isReady || !player || typeof player.playVideo !== 'function' || typeof player.pauseVideo !== 'function') return;
 
     if (isPlaying) {
       player.playVideo();
@@ -98,7 +98,7 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!isReady || !player) return;
+    if (!isReady || !player || typeof player.mute !== 'function' || typeof player.unMute !== 'function') return;
 
     if (isMuted) {
       player.mute();

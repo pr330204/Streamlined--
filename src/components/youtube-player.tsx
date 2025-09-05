@@ -52,7 +52,7 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying }: YouTubePlayerP
         width: '100%',
         videoId: videoId,
         playerVars: {
-          autoplay: 0, // Autoplay is controlled by the parent component now
+          autoplay: 0,
           controls: 0,
           rel: 0,
           showinfo: 0,
@@ -66,9 +66,6 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying }: YouTubePlayerP
              internalPlayerRef.current = event.target;
              if (playerRef) {
                 playerRef.current = event.target;
-             }
-             if (isPlaying) {
-               event.target.playVideo();
              }
           },
         }

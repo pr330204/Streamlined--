@@ -72,7 +72,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
     setIsMuted(newMutedState);
     if (activePlayerIndex !== null) {
       const activePlayer = playerRefs[activePlayerIndex]?.current;
-      if (activePlayer) {
+      if (activePlayer && typeof activePlayer.mute === 'function' && typeof activePlayer.unMute === 'function') {
         if (newMutedState) {
           activePlayer.mute();
         } else {

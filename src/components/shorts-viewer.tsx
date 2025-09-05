@@ -62,16 +62,16 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
   return (
     <div className="h-full w-full overflow-y-auto snap-y snap-mandatory relative">
       {movies.map((movie, index) => (
-        <div 
-          key={movie.id} 
+        <div
+          key={movie.id}
           ref={el => videoRefs.current[index] = el}
           className="h-full w-full snap-start relative flex items-center justify-center bg-black"
         >
-          <YouTubePlayer 
-            videoUrl={movie.url} 
-            playerRef={playerRefs[index]} 
+          <YouTubePlayer
+            videoUrl={movie.url}
+            playerRef={playerRefs[index]}
             isPlaying={index === activePlayerIndex}
-            isMuted={false}
+            isMuted={true} 
           />
           
           <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">

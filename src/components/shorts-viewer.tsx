@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import type { Movie } from "@/lib/types";
-import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4 } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
@@ -14,11 +14,29 @@ interface ShortsViewerProps {
 
 export function ShortsViewer({ movies }: ShortsViewerProps) {
   const [playerRefs, setPlayerRefs] = useState<React.MutableRefObject<any>[]>([]);
+  const [isMuted, setIsMuted] = useState<boolean[]>(movies.map(() => true));
 
   // Initialize player refs
   useState(() => {
     setPlayerRefs(movies.map(() => React.createRef()));
   });
+
+  const toggleMute = (index: number) => {
+    const player = playerRefs[index]?.current;
+    if (player && typeof player.isMuted === 'function') {
+      if (player.isMuted()) {
+        player.unMute();
+      } else {
+        player.mute();
+      }
+      setIsMuted(prev => {
+        const newMutedState = [...prev];
+        newMutedState[index] = !newMutedState[index];
+        return newMutedState;
+      });
+    }
+  };
+
 
   if (movies.length === 0) {
     return (
@@ -37,6 +55,12 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
         <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center bg-black">
           <YouTubePlayer videoUrl={movie.url} playerRef={playerRefs[index]} />
           
+          <div className="absolute top-4 right-4 z-10">
+              <Button variant="ghost" size="icon" onClick={() => toggleMute(index)} className="rounded-full bg-black/50 hover:bg-black/70 text-white">
+                {isMuted[index] ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+              </Button>
+          </div>
+
           <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">
             <div className="flex flex-col items-center text-white">
               <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 hover:bg-black/70">

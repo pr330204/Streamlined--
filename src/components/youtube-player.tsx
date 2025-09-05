@@ -3,7 +3,6 @@
 
 import { useEffect, useRef } from 'react';
 import { getYouTubeVideoId } from '@/lib/utils';
-import { Volume2, VolumeX } from 'lucide-react';
 
 interface YouTubePlayerProps {
   videoUrl: string;
@@ -56,7 +55,7 @@ export function YouTubePlayer({ videoUrl, playerRef }: YouTubePlayerProps) {
           controls: 0,
           rel: 0,
           showinfo: 0,
-          mute: 1,
+          mute: 0, // Set to 0 for unmuted
           playsinline: 1,
           loop: 1,
           playlist: videoId, // Required for loop to work

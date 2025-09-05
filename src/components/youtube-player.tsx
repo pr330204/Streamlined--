@@ -92,17 +92,6 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying }: YouTubePlayerP
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, playerId]);
 
-  useEffect(() => {
-    const player = playerRef.current;
-    if (player && typeof player.playVideo === 'function' && typeof player.pauseVideo === 'function') {
-      if (isPlaying) {
-        player.playVideo();
-      } else {
-        player.pauseVideo();
-      }
-    }
-  }, [isPlaying, playerRef]);
-
 
   if (!videoId) {
     return (

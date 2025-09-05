@@ -1,12 +1,12 @@
 
 "use client";
 
+import React, { useState } from "react";
 import type { Movie } from "@/lib/types";
 import { Heart, MessageCircle, Send, MoreVertical, Music4, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
-import { useRef, useState } from "react";
 
 interface ShortsViewerProps {
   movies: Movie[];

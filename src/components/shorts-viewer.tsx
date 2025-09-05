@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import type { Movie } from "@/lib/types";
-import { Heart, MessageCircle, Send, MoreVertical, Music4, Volume2, VolumeX } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreVertical, Music4 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
@@ -14,26 +14,11 @@ interface ShortsViewerProps {
 
 export function ShortsViewer({ movies }: ShortsViewerProps) {
   const [playerRefs, setPlayerRefs] = useState<React.MutableRefObject<any>[]>([]);
-  const [isMuted, setIsMuted] = useState(true);
 
   // Initialize player refs
   useState(() => {
     setPlayerRefs(movies.map(() => React.createRef()));
   });
-
-  const toggleMute = (index: number) => {
-    const player = playerRefs[index]?.current;
-    if (player && typeof player.isMuted === 'function') {
-      if (player.isMuted()) {
-        player.unMute();
-        setIsMuted(false);
-      } else {
-        player.mute();
-        setIsMuted(true);
-      }
-    }
-  };
-
 
   if (movies.length === 0) {
     return (
@@ -51,12 +36,6 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       {movies.map((movie, index) => (
         <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center bg-black">
           <YouTubePlayer videoUrl={movie.url} playerRef={playerRefs[index]} />
-
-          <div className="absolute top-4 right-4 z-20">
-            <Button onClick={() => toggleMute(index)} size="icon" variant="ghost" className="rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white">
-              {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-            </Button>
-          </div>
 
           <div className="absolute bottom-28 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/60 to-transparent">
              <div className="flex items-end">

@@ -53,7 +53,7 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
           controls: 0,
           rel: 0,
           showinfo: 0,
-          mute: 1, // Start muted for autoplay policies
+          mute: isMuted ? 1 : 0,
           playsinline: 1,
           loop: 1,
           playlist: videoId, // Required for loop to work
@@ -87,7 +87,7 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!isReady || !player) return;
+    if (!isReady || !player || !player.playVideo || !player.pauseVideo) return;
 
     if (isPlaying) {
       player.playVideo();
@@ -98,7 +98,7 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!isReady || !player) return;
+    if (!isReady || !player || !player.mute || !player.unMute) return;
 
     if (isMuted) {
       player.mute();

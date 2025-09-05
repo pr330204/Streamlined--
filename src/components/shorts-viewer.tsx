@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import type { Movie } from "@/lib/types";
-import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Volume2, VolumeX } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
@@ -14,7 +14,6 @@ interface ShortsViewerProps {
 
 export function ShortsViewer({ movies }: ShortsViewerProps) {
   const playerRefs = useMemo(() => movies.map(() => React.createRef<any>()), [movies]);
-  const [isMuted, setIsMuted] = useState(true);
   const [activePlayerIndex, setActivePlayerIndex] = useState<number | null>(0);
   const videoRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -48,22 +47,6 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       });
     };
   }, [movies.length]);
-  
-  const toggleMute = () => {
-    const newMutedState = !isMuted;
-    setIsMuted(newMutedState);
-    if (activePlayerIndex !== null) {
-      const activePlayer = playerRefs[activePlayerIndex]?.current;
-      if (activePlayer && typeof activePlayer.mute === 'function' && typeof activePlayer.unMute === 'function') {
-        if (newMutedState) {
-          activePlayer.mute();
-        } else {
-          activePlayer.unMute();
-        }
-      }
-    }
-  };
-
 
   if (movies.length === 0) {
     return (
@@ -88,20 +71,9 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
             videoUrl={movie.url} 
             playerRef={playerRefs[index]} 
             isPlaying={index === activePlayerIndex}
-            isMuted={isMuted}
+            isMuted={false}
           />
           
-          <div className="absolute top-4 right-4 z-20">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full bg-black/50 hover:bg-black/70 text-white"
-              onClick={toggleMute}
-            >
-              {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-            </Button>
-          </div>
-
           <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">
             <div className="flex flex-col items-center text-white">
               <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 hover:bg-black/70">

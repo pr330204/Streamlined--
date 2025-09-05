@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import type { Movie } from "@/lib/types";
-import { Heart, MessageCircle, Send, MoreVertical, Music4 } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreVertical, Music4, VolumeX, Volume2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
@@ -14,11 +14,29 @@ interface ShortsViewerProps {
 
 export function ShortsViewer({ movies }: ShortsViewerProps) {
   const [playerRefs, setPlayerRefs] = useState<React.MutableRefObject<any>[]>([]);
+  const [isMuted, setIsMuted] = useState<boolean[]>(movies.map(() => true));
 
   // Initialize player refs
   useState(() => {
     setPlayerRefs(movies.map(() => React.createRef()));
   });
+
+  const toggleMute = (index: number) => {
+    const player = playerRefs[index]?.current;
+    if (player && typeof player.isMuted === 'function') {
+      if (player.isMuted()) {
+        player.unMute();
+      } else {
+        player.mute();
+      }
+      setIsMuted(prev => {
+        const newMutedState = [...prev];
+        newMutedState[index] = !newMutedState[index];
+        return newMutedState;
+      });
+    }
+  };
+
 
   if (movies.length === 0) {
     return (
@@ -36,6 +54,17 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       {movies.map((movie, index) => (
         <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center bg-black">
           <YouTubePlayer videoUrl={movie.url} playerRef={playerRefs[index]} />
+
+          <div className="absolute top-4 right-4 z-10">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white"
+              onClick={() => toggleMute(index)}
+            >
+              {isMuted[index] ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            </Button>
+          </div>
 
           <div className="absolute bottom-28 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/60 to-transparent">
              <div className="flex items-end">

@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getYouTubeVideoId } from '@/lib/utils';
 
 interface YouTubePlayerProps {
   videoUrl: string;
   playerRef: React.MutableRefObject<any>;
   isPlaying: boolean;
-  onPlayerReady?: () => void;
+  isMuted: boolean;
 }
 
 declare global {
@@ -28,9 +28,8 @@ if (typeof window !== 'undefined') {
   };
 }
 
-
-export function YouTubePlayer({ videoUrl, playerRef, isPlaying, onPlayerReady }: YouTubePlayerProps) {
-  const internalPlayerRef = useRef<any>(null);
+export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTubePlayerProps) {
+  const [isReady, setIsReady] = useState(false);
   const videoId = getYouTubeVideoId(videoUrl);
   
   const playerId = `ytplayer-${videoId}-${Math.random().toString(36).substring(2, 9)}`;
@@ -45,9 +44,6 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, onPlayerReady }:
       // Ensure the target element exists before creating a player
       if (!document.getElementById(playerId)) return;
       
-      if (internalPlayerRef.current) {
-        internalPlayerRef.current.destroy();
-      }
       const player = new window.YT.Player(playerId, {
         height: '100%',
         width: '100%',
@@ -64,11 +60,8 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, onPlayerReady }:
         },
         events: {
           'onReady': (event: any) => {
-             internalPlayerRef.current = event.target;
-             if (playerRef) {
-                playerRef.current = event.target;
-             }
-             onPlayerReady?.();
+             playerRef.current = event.target;
+             setIsReady(true);
           },
         }
       });
@@ -83,7 +76,7 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, onPlayerReady }:
     }
     
     return () => {
-        const player = internalPlayerRef.current;
+        const player = playerRef.current;
         if (player && typeof player.destroy === 'function') {
             player.destroy();
         }
@@ -91,6 +84,27 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, onPlayerReady }:
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, playerId]);
 
+  useEffect(() => {
+    if (!isReady) return;
+    const player = playerRef.current;
+
+    if (isPlaying) {
+      player.playVideo();
+    } else {
+      player.pauseVideo();
+    }
+  }, [isPlaying, isReady, playerRef]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    const player = playerRef.current;
+
+    if (isMuted) {
+      player.mute();
+    } else {
+      player.unMute();
+    }
+  }, [isMuted, isReady, playerRef]);
 
   if (!videoId) {
     return (

@@ -8,6 +8,7 @@ interface YouTubePlayerProps {
   videoUrl: string;
   playerRef: React.MutableRefObject<any>;
   isPlaying: boolean;
+  onPlayerReady?: () => void;
 }
 
 declare global {
@@ -28,7 +29,7 @@ if (typeof window !== 'undefined') {
 }
 
 
-export function YouTubePlayer({ videoUrl, playerRef, isPlaying }: YouTubePlayerProps) {
+export function YouTubePlayer({ videoUrl, playerRef, isPlaying, onPlayerReady }: YouTubePlayerProps) {
   const internalPlayerRef = useRef<any>(null);
   const videoId = getYouTubeVideoId(videoUrl);
   
@@ -67,6 +68,7 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying }: YouTubePlayerP
              if (playerRef) {
                 playerRef.current = event.target;
              }
+             onPlayerReady?.();
           },
         }
       });

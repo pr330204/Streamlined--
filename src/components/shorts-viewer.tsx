@@ -17,6 +17,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [activePlayerIndex, setActivePlayerIndex] = useState<number | null>(0);
   const videoRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [readyPlayers, setReadyPlayers] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     videoRefs.current = movies.map(() => null);
@@ -48,9 +49,12 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
       });
     };
   }, [movies.length]);
-
+  
   useEffect(() => {
     playerRefs.forEach((playerRef, index) => {
+      // Ensure the player is ready before trying to control it
+      if (!readyPlayers.has(index)) return;
+
       const player = playerRef.current;
       if (player && typeof player.playVideo === 'function' && typeof player.pauseVideo === 'function') {
         if (index === activePlayerIndex) {
@@ -65,7 +69,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
         }
       }
     });
-  }, [activePlayerIndex, playerRefs, isMuted]);
+  }, [activePlayerIndex, playerRefs, isMuted, readyPlayers]);
 
   const toggleMute = () => {
     const newMutedState = !isMuted;
@@ -80,6 +84,10 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
         }
       }
     }
+  };
+  
+  const handlePlayerReady = (index: number) => {
+    setReadyPlayers(prev => new Set(prev).add(index));
   };
 
 
@@ -106,6 +114,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
             videoUrl={movie.url} 
             playerRef={playerRefs[index]} 
             isPlaying={index === activePlayerIndex}
+            onPlayerReady={() => handlePlayerReady(index)}
           />
           
           <div className="absolute top-4 right-4 z-20">

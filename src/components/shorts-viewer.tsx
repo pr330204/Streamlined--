@@ -13,19 +13,22 @@ interface ShortsViewerProps {
 }
 
 export function ShortsViewer({ movies }: ShortsViewerProps) {
-  const playerRef = useRef(null);
+  const [playerRefs, setPlayerRefs] = useState<React.MutableRefObject<any>[]>([]);
   const [isMuted, setIsMuted] = useState(true);
 
-  const toggleMute = () => {
-    if (playerRef.current) {
-      // @ts-ignore
-      if (playerRef.current.isMuted()) {
-        // @ts-ignore
-        playerRef.current.unMute();
+  // Initialize player refs
+  useState(() => {
+    setPlayerRefs(movies.map(() => React.createRef()));
+  });
+
+  const toggleMute = (index: number) => {
+    const player = playerRefs[index]?.current;
+    if (player && typeof player.isMuted === 'function') {
+      if (player.isMuted()) {
+        player.unMute();
         setIsMuted(false);
       } else {
-        // @ts-ignore
-        playerRef.current.mute();
+        player.mute();
         setIsMuted(true);
       }
     }
@@ -34,10 +37,10 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
 
   if (movies.length === 0) {
     return (
-      <div className="flex flex-col h-full items-center justify-center rounded-lg bg-black text-center">
+      <div className="flex flex-col h-full items-center justify-center rounded-lg bg-black text-center p-4">
         <h3 className="text-lg font-semibold tracking-tight">No shorts found</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Try a different search or add a new video under 5 minutes.
+          Try adding a new video under 5 minutes.
         </p>
       </div>
     );
@@ -47,15 +50,15 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
     <div className="h-full w-full overflow-y-auto snap-y snap-mandatory">
       {movies.map((movie, index) => (
         <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center bg-black">
-          <YouTubePlayer videoUrl={movie.url} playerRef={playerRef} />
+          <YouTubePlayer videoUrl={movie.url} playerRef={playerRefs[index]} />
 
           <div className="absolute top-4 right-4 z-20">
-            <Button onClick={toggleMute} size="icon" variant="ghost" className="rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white">
+            <Button onClick={() => toggleMute(index)} size="icon" variant="ghost" className="rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white">
               {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
             </Button>
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/60 to-transparent">
+          <div className="absolute bottom-28 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/60 to-transparent">
              <div className="flex items-end">
                 <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">

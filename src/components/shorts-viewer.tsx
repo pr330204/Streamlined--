@@ -30,6 +30,12 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
             if (index !== -1) {
               setActivePlayerIndex(index);
             }
+          } else {
+            // Optional: Pause video when it's not intersecting
+            const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
+            if (index !== -1 && index === activePlayerIndex) {
+              // You could set activePlayerIndex to null or handle pausing differently
+            }
           }
         });
       },
@@ -46,7 +52,8 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
         if (ref) observer.unobserve(ref);
       });
     };
-  }, [movies.length]);
+  }, [movies.length, activePlayerIndex]);
+
 
   if (movies.length === 0) {
     return (
@@ -71,7 +78,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
             videoUrl={movie.url}
             playerRef={playerRefs[index]}
             isPlaying={index === activePlayerIndex}
-            isMuted={true} 
+            isMuted={false} 
           />
           
           <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">

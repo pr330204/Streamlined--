@@ -13,12 +13,12 @@ interface ShortsViewerProps {
 }
 
 export function ShortsViewer({ movies }: ShortsViewerProps) {
-  const playerRefs = useMemo(() => movies.map(() => React.createRef<any>()), [movies]);
   const [activePlayerIndex, setActivePlayerIndex] = useState<number | null>(0);
+  const playerRefs = useMemo(() => Array.from({ length: movies.length }, () => React.createRef<any>()), [movies]);
   const videoRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    videoRefs.current = movies.map(() => null);
+    videoRefs.current = Array.from({ length: movies.length }, () => null);
   }, [movies]);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
             videoUrl={movie.url}
             playerRef={playerRefs[index]}
             isPlaying={index === activePlayerIndex}
-            isMuted={true} 
+            isMuted={false} 
           />
           
           <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">

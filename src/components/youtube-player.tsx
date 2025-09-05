@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getYouTubeVideoId } from '@/lib/utils';
 
 interface YouTubePlayerProps {
@@ -79,6 +79,7 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
         const player = playerRef.current;
         if (player && typeof player.destroy === 'function') {
             player.destroy();
+            playerRef.current = null;
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,6 +88,12 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
   useEffect(() => {
     if (!isReady) return;
     const player = playerRef.current;
+
+    // This check is crucial to prevent the error.
+    // It ensures we do not try to control the player until the ref is assigned.
+    if (!player || typeof player.playVideo !== 'function' || typeof player.pauseVideo !== 'function') {
+      return;
+    }
 
     if (isPlaying) {
       player.playVideo();
@@ -98,6 +105,11 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
   useEffect(() => {
     if (!isReady) return;
     const player = playerRef.current;
+
+    // Add the same crucial check here for mute/unmute.
+    if (!player || typeof player.mute !== 'function' || typeof player.unMute !== 'function') {
+      return;
+    }
 
     if (isMuted) {
       player.mute();

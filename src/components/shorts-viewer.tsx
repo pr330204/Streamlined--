@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { Movie } from "@/lib/types";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -14,11 +14,72 @@ interface ShortsViewerProps {
 
 export function ShortsViewer({ movies }: ShortsViewerProps) {
   const [playerRefs, setPlayerRefs] = useState<React.MutableRefObject<any>[]>([]);
-  
-  // Initialize player refs
-  useState(() => {
+  const [isMuted, setIsMuted] = useState(true);
+  const [activePlayerIndex, setActivePlayerIndex] = useState<number | null>(0);
+  const videoRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
     setPlayerRefs(movies.map(() => React.createRef()));
-  });
+    videoRefs.current = movies.map(() => null);
+  }, [movies]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
+          if (entry.isIntersecting) {
+            setActivePlayerIndex(index);
+          }
+        });
+      },
+      { threshold: 0.7 }
+    );
+
+    videoRefs.current.forEach(ref => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      videoRefs.current.forEach(ref => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
+  }, [movies.length]);
+
+  useEffect(() => {
+    playerRefs.forEach((playerRef, index) => {
+      const player = playerRef.current;
+      if (player && typeof player.playVideo === 'function' && typeof player.pauseVideo === 'function') {
+        if (index === activePlayerIndex) {
+          player.playVideo();
+          if (isMuted) {
+            player.mute();
+          } else {
+            player.unMute();
+          }
+        } else {
+          player.pauseVideo();
+        }
+      }
+    });
+  }, [activePlayerIndex, playerRefs, isMuted]);
+
+  const toggleMute = () => {
+    const newMutedState = !isMuted;
+    setIsMuted(newMutedState);
+    if (activePlayerIndex !== null) {
+      const activePlayer = playerRefs[activePlayerIndex]?.current;
+      if (activePlayer) {
+        if (newMutedState) {
+          activePlayer.mute();
+        } else {
+          activePlayer.unMute();
+        }
+      }
+    }
+  };
+
 
   if (movies.length === 0) {
     return (
@@ -32,11 +93,30 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto snap-y snap-mandatory">
+    <div className="h-full w-full overflow-y-auto snap-y snap-mandatory relative">
       {movies.map((movie, index) => (
-        <div key={movie.id} className="h-full w-full snap-start relative flex items-center justify-center bg-black">
-          <YouTubePlayer videoUrl={movie.url} playerRef={playerRefs[index]} />
+        <div 
+          key={movie.id} 
+          ref={el => videoRefs.current[index] = el}
+          className="h-full w-full snap-start relative flex items-center justify-center bg-black"
+        >
+          <YouTubePlayer 
+            videoUrl={movie.url} 
+            playerRef={playerRefs[index]} 
+            isPlaying={index === activePlayerIndex}
+          />
           
+          <div className="absolute top-4 right-4 z-20">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full bg-black/50 hover:bg-black/70 text-white"
+              onClick={toggleMute}
+            >
+              {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+            </Button>
+          </div>
+
           <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">
             <div className="flex flex-col items-center text-white">
               <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 hover:bg-black/70">

@@ -7,6 +7,7 @@ import { getYouTubeVideoId } from '@/lib/utils';
 interface YouTubePlayerProps {
   videoUrl: string;
   playerRef: React.MutableRefObject<any>;
+  isPlaying: boolean;
 }
 
 declare global {
@@ -27,7 +28,7 @@ if (typeof window !== 'undefined') {
 }
 
 
-export function YouTubePlayer({ videoUrl, playerRef }: YouTubePlayerProps) {
+export function YouTubePlayer({ videoUrl, playerRef, isPlaying }: YouTubePlayerProps) {
   const internalPlayerRef = useRef<any>(null);
   const videoId = getYouTubeVideoId(videoUrl);
   
@@ -51,21 +52,23 @@ export function YouTubePlayer({ videoUrl, playerRef }: YouTubePlayerProps) {
         width: '100%',
         videoId: videoId,
         playerVars: {
-          autoplay: 1,
+          autoplay: 0, // Autoplay is controlled by the parent component now
           controls: 0,
           rel: 0,
           showinfo: 0,
-          mute: 0, // Set to 0 for unmuted
+          mute: 1, // Start muted for autoplay policies
           playsinline: 1,
           loop: 1,
           playlist: videoId, // Required for loop to work
         },
         events: {
           'onReady': (event: any) => {
-             event.target.playVideo();
              internalPlayerRef.current = event.target;
              if (playerRef) {
                 playerRef.current = event.target;
+             }
+             if (isPlaying) {
+               event.target.playVideo();
              }
           },
         }
@@ -87,7 +90,18 @@ export function YouTubePlayer({ videoUrl, playerRef }: YouTubePlayerProps) {
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId, playerId, videoUrl]);
+  }, [videoId, playerId]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (player && typeof player.playVideo === 'function' && typeof player.pauseVideo === 'function') {
+      if (isPlaying) {
+        player.playVideo();
+      } else {
+        player.pauseVideo();
+      }
+    }
+  }, [isPlaying, playerRef]);
 
 
   if (!videoId) {

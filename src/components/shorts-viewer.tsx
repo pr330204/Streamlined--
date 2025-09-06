@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, a{ useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { Movie } from "@/lib/types";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -16,7 +16,7 @@ interface ShortsViewerProps {
 
 export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsViewerProps) {
   const [activePlayerIndex, setActivePlayerIndex] = useState<number | null>(0);
-  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
+  const [isMuted, setIsMuted] = useState(true);
   const playerRefs = useMemo(() => Array.from({ length: movies.length }, () => React.createRef<any>()), [movies.length]);
   const videoRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -30,7 +30,7 @@ export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsView
         const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
         if (index !== -1) {
           setActivePlayerIndex(index);
-          if (index === movies.length - 2) { // Load more when 2nd to last video is visible
+          if (index === movies.length - 2) { 
             onEndReached();
           }
         }
@@ -77,7 +77,7 @@ export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsView
             videoUrl={movie.url}
             playerRef={playerRefs[index]}
             isPlaying={index === activePlayerIndex}
-            isMuted={isMuted}
+            isMuted={false}
           />
           
           <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">

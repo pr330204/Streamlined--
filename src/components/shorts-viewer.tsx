@@ -16,32 +16,31 @@ interface ShortsViewerProps {
 
 export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsViewerProps) {
   const [activePlayerIndex, setActivePlayerIndex] = useState<number | null>(0);
-  const [isMuted, setIsMuted] = useState(true);
   const playerRefs = useMemo(() => Array.from({ length: movies.length }, () => React.createRef<any>()), [movies.length]);
   const videoRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    videoRefs.current = Array.from({ length: movies.length }, () => null);
+    videoRefs.current = Array.from({ length: movies.length }, (_, i) => videoRefs.current[i] || null);
   }, [movies.length]);
 
   const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
     entries.forEach(entry => {
+      const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
+      if (index === -1) return;
+
       if (entry.isIntersecting) {
-        const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
-        if (index !== -1) {
-          setActivePlayerIndex(index);
-          if (index === movies.length - 2) { 
-            onEndReached();
-          }
+        setActivePlayerIndex(index);
+        if (index === movies.length - 2 && !isLoadingMore) { 
+          onEndReached();
         }
       }
     });
-  }, [movies.length, onEndReached]);
+  }, [movies.length, onEndReached, isLoadingMore]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(handleIntersection, { threshold: 0.7 });
-
     const currentVideoRefs = videoRefs.current;
+    
     currentVideoRefs.forEach(ref => {
       if (ref) observer.observe(ref);
     });
@@ -51,10 +50,10 @@ export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsView
         if (ref) observer.unobserve(ref);
       });
     };
-  }, [movies.length, handleIntersection]);
+  }, [movies, handleIntersection]);
 
 
-  if (movies.length === 0) {
+  if (movies.length === 0 && !isLoadingMore) {
     return (
       <div className="flex flex-col h-full items-center justify-center rounded-lg bg-black text-center p-4">
         <h3 className="text-lg font-semibold tracking-tight">No shorts found</h3>

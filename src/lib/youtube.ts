@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 'use server';
 
@@ -6,6 +7,12 @@ import { getYouTubeVideoId, parseISO8601Duration } from './utils';
 import fetch from 'node-fetch';
 
 const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+
+export interface YouTubeShortsResponse {
+  videos: Movie[];
+  nextPageToken?: string;
+}
+
 
 export async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[]> {
   const videoIds = movies
@@ -90,18 +97,21 @@ async function fetchChannelDataForMovies(youtubeItems: any[]): Promise<Movie[]> 
 
 
 // Fetch YouTube Shorts videos
-export async function fetchYouTubeShorts(query: string = "shorts"): Promise<Movie[]> {
+export async function fetchYouTubeShorts(query: string = "shorts", pageToken?: string): Promise<YouTubeShortsResponse> {
+  const emptyResponse = { videos: [], nextPageToken: undefined };
   if (!YOUTUBE_API_KEY) {
     console.log("YouTube API Key not found, skipping API call for shorts.");
-    return [];
+    return emptyResponse;
   }
   try {
-    const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${query}&type=video&videoDuration=short&key=${YOUTUBE_API_KEY}`
-    );
+    let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${query}&type=video&videoDuration=short&key=${YOUTUBE_API_KEY}`;
+    if (pageToken) {
+        url += `&pageToken=${pageToken}`;
+    }
+    const res = await fetch(url);
     const data = await res.json();
 
-    if (!data.items) return [];
+    if (!data.items) return emptyResponse;
 
     const videos: Movie[] = data.items.map((item: any) => ({
       id: item.id.videoId,
@@ -109,18 +119,18 @@ export async function fetchYouTubeShorts(query: string = "shorts"): Promise<Movi
       title: item.snippet.title,
       channelTitle: item.snippet.channelTitle,
       thumbnailUrl: item.snippet.thumbnails.high.url,
-      // API search results don't give channel thumbnails directly, 
-      // so this part might be missing without another API call.
-      // We will leave it empty for now.
       channelThumbnailUrl: "", 
       votes: 0,
       createdAt: item.snippet.publishedAt,
       duration: 60, // Assuming shorts are <= 60 seconds
     }));
 
-    return videos;
+    return {
+        videos,
+        nextPageToken: data.nextPageToken,
+    };
   } catch (err) {
     console.error("Error fetching YouTube Shorts:", err);
-    return [];
+    return emptyResponse;
   }
 }

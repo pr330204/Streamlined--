@@ -1,19 +1,22 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { Movie } from "@/lib/types";
-import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4 } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
 
 interface ShortsViewerProps {
   movies: Movie[];
+  onEndReached: () => void;
+  isLoadingMore: boolean;
 }
 
-export function ShortsViewer({ movies }: ShortsViewerProps) {
+export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsViewerProps) {
   const [activePlayerIndex, setActivePlayerIndex] = useState<number | null>(0);
+  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
   const playerRefs = useMemo(() => Array.from({ length: movies.length }, () => React.createRef<any>()), [movies.length]);
   const videoRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -21,26 +24,22 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
     videoRefs.current = Array.from({ length: movies.length }, () => null);
   }, [movies.length]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
-            if (index !== -1) {
-              setActivePlayerIndex(index);
-            }
-          } else {
-            // Optional: Pause video when it's not intersecting
-            const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
-            if (index !== -1 && index === activePlayerIndex) {
-              // You could set activePlayerIndex to null or handle pausing differently
-            }
+  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const index = videoRefs.current.indexOf(entry.target as HTMLDivElement);
+        if (index !== -1) {
+          setActivePlayerIndex(index);
+          if (index === movies.length - 2) { // Load more when 2nd to last video is visible
+            onEndReached();
           }
-        });
-      },
-      { threshold: 0.7 }
-    );
+        }
+      }
+    });
+  }, [movies.length, onEndReached]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleIntersection, { threshold: 0.7 });
 
     const currentVideoRefs = videoRefs.current;
     currentVideoRefs.forEach(ref => {
@@ -52,7 +51,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
         if (ref) observer.unobserve(ref);
       });
     };
-  }, [movies.length, activePlayerIndex]);
+  }, [movies.length, handleIntersection]);
 
 
   if (movies.length === 0) {
@@ -70,7 +69,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
     <div className="h-full w-full overflow-y-auto snap-y snap-mandatory relative">
       {movies.map((movie, index) => (
         <div
-          key={movie.id}
+          key={`${movie.id}-${index}`}
           ref={el => videoRefs.current[index] = el}
           className="h-full w-full snap-start relative flex items-center justify-center bg-black"
         >
@@ -78,7 +77,7 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
             videoUrl={movie.url}
             playerRef={playerRefs[index]}
             isPlaying={index === activePlayerIndex}
-            isMuted={false} 
+            isMuted={isMuted}
           />
           
           <div className="absolute bottom-16 right-0 p-4 flex flex-col items-center justify-end z-10 gap-4">
@@ -133,6 +132,11 @@ export function ShortsViewer({ movies }: ShortsViewerProps) {
           </div>
         </div>
       ))}
+      {isLoadingMore && (
+        <div className="h-full w-full snap-start relative flex items-center justify-center bg-black">
+           <Loader2 className="h-8 w-8 text-white animate-spin" />
+        </div>
+      )}
     </div>
   );
 }

@@ -30,7 +30,7 @@ export default function ShortsPage() {
     const firstBatchQuery = query(collection(db, "movies"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
     const documentSnapshots = await getDocs(firstBatchQuery);
     
-    const moviesFromDb = documentSnapshots.docs.map(doc => {
+    let moviesFromDb = documentSnapshots.docs.map(doc => {
       const data = doc.data();
       return { 
         id: doc.id, 
@@ -45,28 +45,17 @@ export default function ShortsPage() {
     // Fetch from YouTube API
     const shortsFromApiData = await fetchYouTubeShorts("trending shorts");
     setNextPageToken(shortsFromApiData.nextPageToken);
+
+    // Fetch details for DB movies
+    moviesFromDb = await fetchYouTubeDataForMovies(moviesFromDb);
+    const shortVideosFromDb = moviesFromDb.filter(movie => movie.duration && movie.duration <= 300);
     
     // Combine, shuffle, and set initial data
-    const combined = [...moviesFromDb, ...shortsFromApiData.videos]
-      .filter(m => m.duration === undefined || m.duration <= 300)
+    const combined = [...shortVideosFromDb, ...shortsFromApiData.videos]
       .sort(() => Math.random() - 0.5);
     
     setShorts(combined);
     setLoading(false);
-
-    // Fetch details in background
-    fetchYouTubeDataForMovies(moviesFromDb).then(moviesWithYTData => {
-      const shortVideosFromDb = moviesWithYTData.filter(movie => movie.duration && movie.duration <= 300);
-      setShorts(currentShorts => {
-          const updatedShorts = currentShorts.map(s => moviesWithYTData.find(m => m.id === s.id) || s);
-          const finalCombined = [...shortVideosFromDb, ...shortsFromApiData.videos].sort(() => Math.random() - 0.5);
-          // A simple way to merge without duplicates and keep order
-          const map = new Map();
-          [...updatedShorts, ...finalCombined].forEach(item => map.set(item.id, item));
-          return Array.from(map.values());
-      });
-    });
-
   }, []);
 
   useEffect(() => {
@@ -100,9 +89,6 @@ export default function ShortsPage() {
       
       const newLastVisible = documentSnapshots.docs[documentSnapshots.docs.length - 1];
       setLastVisible(newLastVisible || null);
-      if (documentSnapshots.docs.length < PAGE_SIZE) {
-        // May have reached the end for Firebase
-      }
     }
 
     // Fetch more from YouTube API
@@ -115,14 +101,14 @@ export default function ShortsPage() {
     if(newMoviesFromDb.length === 0 && newShortsFromApi.length === 0) {
         setHasMore(false);
     } else {
-        const combined = [...newMoviesFromDb, ...newShortsFromApi]
-          .filter(m => m.duration === undefined || m.duration <= 300)
+        // Fetch details for new DB items and filter
+        const moviesWithData = await fetchYouTubeDataForMovies(newMoviesFromDb);
+        const filteredNewMoviesFromDb = moviesWithData.filter(m => m.duration && m.duration <= 300);
+
+        const combined = [...filteredNewMoviesFromDb, ...newShortsFromApi]
           .sort(() => Math.random() - 0.5);
         
         setShorts(prevShorts => [...prevShorts, ...combined]);
-        
-        // Fetch details in background for new DB items
-        fetchYouTubeDataForMovies(newMoviesFromDb);
     }
 
     setLoadingMore(false);

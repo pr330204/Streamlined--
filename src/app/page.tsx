@@ -31,13 +31,13 @@ export default function Home() {
       }).filter(movie => getYouTubeVideoId(movie.url)); // Filter for valid YouTube URLs
       
       // Initial load with what we have
-      setMovies(moviesFromDb);
+      setMovies(moviesFromDb.filter(movie => !movie.duration)); // Show movies without duration first
       setLoading(false);
 
       // Fetch YT data in the background and update
       fetchYouTubeDataForMovies(moviesFromDb).then(moviesWithYTData => {
          // Filter for videos longer than 5 minutes (300 seconds)
-         const longVideos = moviesWithYTData.filter(movie => !movie.duration || movie.duration > 300);
+         const longVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration > 300);
          setMovies(longVideos);
       });
     });

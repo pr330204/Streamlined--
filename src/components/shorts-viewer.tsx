@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, a{ useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { Movie } from "@/lib/types";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";

@@ -20,7 +20,6 @@ export default function ShortsPage() {
     const unsub = onSnapshot(q, async (snapshot) => {
       setLoading(true);
       
-      // Fetch movies from Firebase
       const moviesFromDb = snapshot.docs.map(doc => {
         const data = doc.data();
         return { 
@@ -30,19 +29,22 @@ export default function ShortsPage() {
         } as Movie
       });
       
-      // Enrich Firebase movies with YT data
-      const moviesWithYTData = await fetchYouTubeDataForMovies(moviesFromDb);
-      const shortVideosFromDb = moviesWithYTData.filter(movie => movie.duration && movie.duration <= 300);
-
-      // Fetch new shorts from YouTube API
       const shortsFromApi = await fetchYouTubeShorts("trending shorts");
 
-      // Combine and shuffle the two sources
-      const combinedShorts = [...shortVideosFromDb, ...shortsFromApi];
-      const shuffledShorts = combinedShorts.sort(() => Math.random() - 0.5);
+      const combinedShorts = [...moviesFromDb, ...shortsFromApi]
+        .filter(m => m.duration === undefined || m.duration <= 300) // pre-filter
+        .sort(() => Math.random() - 0.5);
       
-      setShorts(shuffledShorts);
+      // Set initial data for fast load
+      setShorts(combinedShorts);
       setLoading(false);
+
+      // Fetch details in background
+      fetchYouTubeDataForMovies(moviesFromDb).then(moviesWithYTData => {
+        const shortVideosFromDb = moviesWithYTData.filter(movie => movie.duration && movie.duration <= 300);
+        const finalCombined = [...shortVideosFromDb, ...shortsFromApi].sort(() => Math.random() - 0.5);
+        setShorts(finalCombined);
+      });
     });
 
     return () => unsub();

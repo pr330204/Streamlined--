@@ -8,7 +8,7 @@ interface MovieListProps {
 }
 
 export function MovieList({ movies, variant = 'grid', className }: MovieListProps) {
-  if (movies.length === 0) {
+  if (!movies || movies.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20 p-12 text-center col-span-full">
         <h3 className="text-lg font-semibold tracking-tight">No videos found</h3>

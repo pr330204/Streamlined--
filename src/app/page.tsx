@@ -1,7 +1,7 @@
 "use client";
 
 import type { Movie } from "@/lib/types";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { db } from "@/lib/firebase";
@@ -18,7 +18,7 @@ export default function Home() {
 
   useEffect(() => {
     const q = query(collection(db, "movies"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, async (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
       const moviesFromDb = snapshot.docs.map(doc => {
         const data = doc.data();
         return { 
@@ -27,11 +27,17 @@ export default function Home() {
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
       });
-      const moviesWithYTData = await fetchYouTubeDataForMovies(moviesFromDb);
-      // Filter for videos longer than 5 minutes (300 seconds)
-      const longVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration > 300);
-      setMovies(longVideos);
+      
+      // Initial load with what we have
+      setMovies(moviesFromDb);
       setLoading(false);
+
+      // Fetch YT data in the background and update
+      fetchYouTubeDataForMovies(moviesFromDb).then(moviesWithYTData => {
+         // Filter for videos longer than 5 minutes (300 seconds)
+         const longVideos = moviesWithYTData.filter(movie => !movie.duration || movie.duration > 300);
+         setMovies(longVideos);
+      });
     });
 
     return () => unsub();

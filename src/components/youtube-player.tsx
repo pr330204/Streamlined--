@@ -87,23 +87,27 @@ export function YouTubePlayer({ videoUrl, playerRef, isPlaying, isMuted }: YouTu
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!isReady || !player || typeof player.playVideo !== 'function' || typeof player.pauseVideo !== 'function') return;
-
-    if (isPlaying) {
-      player.playVideo();
-    } else {
-      player.pauseVideo();
+    if (isReady && player) {
+        if (isPlaying) {
+            if (typeof player.playVideo === 'function') {
+                player.playVideo();
+            }
+        } else {
+            if (typeof player.pauseVideo === 'function') {
+                player.pauseVideo();
+            }
+        }
     }
   }, [isPlaying, isReady, playerRef]);
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!isReady || !player || typeof player.mute !== 'function' || typeof player.unMute !== 'function') return;
-
-    if (isMuted) {
-      player.mute();
-    } else {
-      player.unMute();
+    if (isReady && player) {
+      if (isMuted) {
+        if (typeof player.mute === 'function') player.mute();
+      } else {
+        if (typeof player.unMute === 'function') player.unMute();
+      }
     }
   }, [isMuted, isReady, playerRef]);
 

@@ -87,3 +87,40 @@ async function fetchChannelDataForMovies(youtubeItems: any[]): Promise<Movie[]> 
     return [];
   }
 }
+
+
+// Fetch YouTube Shorts videos
+export async function fetchYouTubeShorts(query: string = "shorts"): Promise<Movie[]> {
+  if (!YOUTUBE_API_KEY) {
+    console.log("YouTube API Key not found, skipping API call for shorts.");
+    return [];
+  }
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${query}&type=video&videoDuration=short&key=${YOUTUBE_API_KEY}`
+    );
+    const data = await res.json();
+
+    if (!data.items) return [];
+
+    const videos: Movie[] = data.items.map((item: any) => ({
+      id: item.id.videoId,
+      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+      title: item.snippet.title,
+      channelTitle: item.snippet.channelTitle,
+      thumbnailUrl: item.snippet.thumbnails.high.url,
+      // API search results don't give channel thumbnails directly, 
+      // so this part might be missing without another API call.
+      // We will leave it empty for now.
+      channelThumbnailUrl: "", 
+      votes: 0,
+      createdAt: item.snippet.publishedAt,
+      duration: 60, // Assuming shorts are <= 60 seconds
+    }));
+
+    return videos;
+  } catch (err) {
+    console.error("Error fetching YouTube Shorts:", err);
+    return [];
+  }
+}

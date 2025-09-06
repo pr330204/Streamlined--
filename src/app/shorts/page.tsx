@@ -4,7 +4,7 @@ import type { Movie } from "@/lib/types";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
-import { fetchYouTubeDataForMovies } from "@/lib/youtube";
+import { fetchYouTubeDataForMovies, fetchYouTubeShorts } from "@/lib/youtube";
 import { ShortsViewer } from "@/components/shorts-viewer";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
@@ -16,8 +16,11 @@ export default function ShortsPage() {
 
   useEffect(() => {
     const q = query(collection(db, "movies"), orderBy("createdAt", "desc"));
+    
     const unsub = onSnapshot(q, async (snapshot) => {
       setLoading(true);
+      
+      // Fetch movies from Firebase
       const moviesFromDb = snapshot.docs.map(doc => {
         const data = doc.data();
         return { 
@@ -27,12 +30,18 @@ export default function ShortsPage() {
         } as Movie
       });
       
+      // Enrich Firebase movies with YT data
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesFromDb);
+      const shortVideosFromDb = moviesWithYTData.filter(movie => movie.duration && movie.duration <= 300);
+
+      // Fetch new shorts from YouTube API
+      const shortsFromApi = await fetchYouTubeShorts("trending shorts");
+
+      // Combine and shuffle the two sources
+      const combinedShorts = [...shortVideosFromDb, ...shortsFromApi];
+      const shuffledShorts = combinedShorts.sort(() => Math.random() - 0.5);
       
-      // Filter for videos 5 minutes (300 seconds) or shorter
-      const shortVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration <= 300);
-      
-      setShorts(shortVideos);
+      setShorts(shuffledShorts);
       setLoading(false);
     });
 

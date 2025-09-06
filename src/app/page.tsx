@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Movie } from "@/lib/types";
@@ -9,6 +10,7 @@ import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timest
 import { MovieList } from "@/components/movie-list";
 import AdMobBanner from "@/components/admob-banner";
 import { fetchYouTubeDataForMovies } from "@/lib/youtube";
+import { getYouTubeVideoId } from "@/lib/utils";
 
 export default function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -26,7 +28,7 @@ export default function Home() {
           ...data,
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
-      });
+      }).filter(movie => getYouTubeVideoId(movie.url)); // Filter for valid YouTube URLs
       
       // Initial load with what we have
       setMovies(moviesFromDb);

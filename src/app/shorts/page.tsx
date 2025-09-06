@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Movie } from "@/lib/types";
@@ -8,6 +9,7 @@ import { fetchYouTubeDataForMovies, fetchYouTubeShorts } from "@/lib/youtube";
 import { ShortsViewer } from "@/components/shorts-viewer";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
+import { getYouTubeVideoId } from "@/lib/utils";
 
 export default function ShortsPage() {
   const [shorts, setShorts] = useState<Movie[]>([]);
@@ -27,7 +29,7 @@ export default function ShortsPage() {
           ...data,
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
-      });
+      }).filter(movie => getYouTubeVideoId(movie.url)); // Filter for valid YouTube URLs
       
       const shortsFromApi = await fetchYouTubeShorts("trending shorts");
 

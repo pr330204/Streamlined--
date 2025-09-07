@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -64,7 +65,9 @@ export default function WatchPageContent() {
         } as Movie;
       });
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesData);
-      setSuggestedMovies(moviesWithYTData);
+      // Filter for videos longer than 5 minutes (300 seconds)
+      const longVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration > 300);
+      setSuggestedMovies(longVideos);
     });
 
     return () => unsub();

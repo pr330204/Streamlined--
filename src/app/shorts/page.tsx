@@ -53,8 +53,19 @@ export default function ShortsPage() {
     // Combine, shuffle, and set initial data
     const combined = [...shortVideosFromDb, ...shortsFromApiData.videos]
       .sort(() => Math.random() - 0.5);
+
+    // Filter for unique videos
+    const uniqueIds = new Set<string>();
+    const uniqueShorts = combined.filter(movie => {
+        const videoId = getYouTubeVideoId(movie.url);
+        if (videoId && !uniqueIds.has(videoId)) {
+            uniqueIds.add(videoId);
+            return true;
+        }
+        return false;
+    });
     
-    setShorts(combined);
+    setShorts(uniqueShorts);
     setLoading(false);
   }, []);
 
@@ -108,7 +119,14 @@ export default function ShortsPage() {
         const combined = [...filteredNewMoviesFromDb, ...newShortsFromApi]
           .sort(() => Math.random() - 0.5);
         
-        setShorts(prevShorts => [...prevShorts, ...combined]);
+        setShorts(prevShorts => {
+            const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url)).filter(Boolean));
+            const uniqueNewShorts = combined.filter(movie => {
+                const videoId = getYouTubeVideoId(movie.url);
+                return videoId && !existingIds.has(videoId);
+            });
+            return [...prevShorts, ...uniqueNewShorts];
+        });
     }
 
     setLoadingMore(false);

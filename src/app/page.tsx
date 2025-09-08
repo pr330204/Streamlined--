@@ -34,7 +34,8 @@ export default function Home() {
 
       // Fetch YT data and then set the movies
       fetchYouTubeDataForMovies(playableMovies).then(moviesWithYTData => {
-         setMovies(moviesWithYTData);
+         const longVideos = moviesWithYTData.filter(movie => !movie.duration || movie.duration > 300);
+         setMovies(longVideos);
          setLoading(false);
       });
     });

@@ -103,3 +103,21 @@ export function parseISO8601Duration(duration: string): number {
 
   return (hours * 3600) + (minutes * 60) + seconds;
 }
+
+
+export function isPlayableOrGoogleDrive(url: string): boolean {
+  if (!url) return false;
+  
+  const isYouTube = !!getYouTubeVideoId(url);
+  
+  let isGoogleDrive = false;
+  try {
+    const urlObj = new URL(url);
+    isGoogleDrive = urlObj.hostname.includes('drive.google.com');
+  } catch (error) {
+    // Fallback for non-URL strings
+    isGoogleDrive = url.includes('drive.google.com');
+  }
+
+  return isYouTube || isGoogleDrive;
+}

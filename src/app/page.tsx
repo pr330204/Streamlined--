@@ -10,7 +10,7 @@ import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timest
 import { MovieList } from "@/components/movie-list";
 import AdMobBanner from "@/components/admob-banner";
 import { fetchYouTubeDataForMovies } from "@/lib/youtube";
-import { getYouTubeVideoId } from "@/lib/utils";
+import { isPlayableOrGoogleDrive } from "@/lib/utils";
 
 export default function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -30,11 +30,11 @@ export default function Home() {
         } as Movie
       });
       
-      // Fetch YT data and then filter and set the movies
-      fetchYouTubeDataForMovies(moviesFromDb).then(moviesWithYTData => {
-         // For non-YouTube videos, duration will be undefined. We can assume they are long videos for the home page.
-         const longVideos = moviesWithYTData.filter(movie => !getYouTubeVideoId(movie.url) || (movie.duration && movie.duration > 300));
-         setMovies(longVideos);
+      const playableMovies = moviesFromDb.filter(movie => isPlayableOrGoogleDrive(movie.url));
+
+      // Fetch YT data and then set the movies
+      fetchYouTubeDataForMovies(playableMovies).then(moviesWithYTData => {
+         setMovies(moviesWithYTData);
          setLoading(false);
       });
     });

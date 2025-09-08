@@ -28,12 +28,12 @@ export default function Home() {
           ...data,
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
-      }).filter(movie => getYouTubeVideoId(movie.url)); // Filter for valid YouTube URLs
+      });
       
       // Fetch YT data and then filter and set the movies
       fetchYouTubeDataForMovies(moviesFromDb).then(moviesWithYTData => {
-         // Filter for videos longer than 5 minutes (300 seconds)
-         const longVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration > 300);
+         // For non-YouTube videos, duration will be undefined. We can assume they are long videos for the home page.
+         const longVideos = moviesWithYTData.filter(movie => !getYouTubeVideoId(movie.url) || (movie.duration && movie.duration > 300));
          setMovies(longVideos);
          setLoading(false);
       });

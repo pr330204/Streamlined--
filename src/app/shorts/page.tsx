@@ -2,7 +2,7 @@
 "use client";
 
 import type { Movie } from "@/lib/types";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy, Timestamp, limit, startAfter, getDocs, DocumentSnapshot } from "firebase/firestore";
 import { fetchYouTubeDataForMovies, fetchYouTubeShorts, YouTubeShortsResponse } from "@/lib/youtube";
@@ -17,6 +17,7 @@ export default function ShortsPage() {
   const [shorts, setShorts] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMovieOpen, setAddMovieOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   const [lastVisible, setLastVisible] = useState<DocumentSnapshot | null>(null);
   const [nextPageToken, setNextPageToken] = useState<string | undefined>(undefined);
@@ -132,10 +133,19 @@ export default function ShortsPage() {
     setLoadingMore(false);
   }, [loadingMore, hasMore, lastVisible, nextPageToken]);
 
+  const filteredShorts = useMemo(() => {
+    if (!searchQuery) {
+      return shorts;
+    }
+    return shorts.filter((short) =>
+      short.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [shorts, searchQuery]);
+
 
   return (
     <div className="flex h-screen w-full flex-col bg-black text-foreground">
-       <Header onAddMovieClick={() => setAddMovieOpen(true)} />
+       <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
        <main className="flex-1 relative">
          {loading ? (
             <div className="flex items-center justify-center h-full">
@@ -143,7 +153,7 @@ export default function ShortsPage() {
             </div>
          ) : (
             <ShortsViewer 
-              movies={shorts} 
+              movies={filteredShorts} 
               onEndReached={loadMoreShorts} 
               isLoadingMore={loadingMore}
             />

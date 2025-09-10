@@ -119,10 +119,14 @@ export default function ShortsPage() {
         const combined = [...filteredNewMoviesFromDb, ...newShortsFromApi];
         
         setShorts(prevShorts => {
-            const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url)).filter(Boolean));
+            const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url)).filter(Boolean) as string[]);
             const uniqueNewShorts = combined.filter(movie => {
                 const videoId = getYouTubeVideoId(movie.url);
-                return videoId && !existingIds.has(videoId);
+                if (videoId && !existingIds.has(videoId)) {
+                    existingIds.add(videoId); // Add to set to prevent duplicates within the new batch
+                    return true;
+                }
+                return false;
             });
             return [...prevShorts, ...uniqueNewShorts];
         });

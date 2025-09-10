@@ -10,7 +10,7 @@ import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timest
 import { MovieList } from "@/components/movie-list";
 import AdMobBanner from "@/components/admob-banner";
 import { fetchYouTubeDataForMovies } from "@/lib/youtube";
-import { isPlayableOrGoogleDrive } from "@/lib/utils";
+import { isPlayableOrGoogleDrive, getYouTubeVideoId } from "@/lib/utils";
 
 export default function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -30,11 +30,22 @@ export default function Home() {
         } as Movie
       });
       
-      const playableMovies = moviesFromDb.filter(movie => isPlayableOrGoogleDrive(movie.url));
+      const playableOrGDriveMovies = moviesFromDb.filter(movie => isPlayableOrGoogleDrive(movie.url));
+      
+      const youtubeMovies = playableOrGDriveMovies.filter(movie => getYouTubeVideoId(movie.url));
+      const otherMovies = playableOrGDriveMovies.filter(movie => !getYouTubeVideoId(movie.url));
 
-      // Fetch YT data and then set the movies
-      fetchYouTubeDataForMovies(playableMovies).then(moviesWithYTData => {
-         const longVideos = moviesWithYTData.filter(movie => !movie.duration || movie.duration > 300);
+      fetchYouTubeDataForMovies(youtubeMovies).then(ytMoviesWithData => {
+         const allMovies = [...ytMoviesWithData, ...otherMovies];
+         const longVideos = allMovies.filter(movie => !movie.duration || movie.duration > 300);
+         
+         // Sort all movies by creation date after processing
+         longVideos.sort((a, b) => {
+            const dateA = new Date(a.createdAt as string).getTime();
+            const dateB = new Date(b.createdAt as string).getTime();
+            return dateB - dateA;
+         });
+
          setMovies(longVideos);
          setLoading(false);
       });

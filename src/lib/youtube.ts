@@ -18,6 +18,8 @@ export async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[
   const videoIds = movies
     .map((movie) => getYouTubeVideoId(movie.url))
     .filter(Boolean) as string[];
+  
+  // If there are no YouTube video IDs to process, return the original movies array.
   if (videoIds.length === 0 || !YOUTUBE_API_KEY) return movies;
 
   const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds.join(
@@ -55,6 +57,7 @@ export async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[
             channelThumbnailUrl: channelDataMap.get(videoId) || movie.channelThumbnailUrl,
           };
         }
+        // If it's not a YouTube video, return the original movie object unchanged.
         return movie;
       });
     }

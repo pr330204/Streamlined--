@@ -8,6 +8,7 @@ import type { Movie } from "@/lib/types";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import {
@@ -23,14 +24,20 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast";
 
+const ADMIN_PASSWORD = "Prashant";
+
 export default function AdminDeletePage() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMovieOpen, setAddMovieOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const q = query(collection(db, "movies"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const moviesFromDb = snapshot.docs.map(doc => {
@@ -46,7 +53,7 @@ export default function AdminDeletePage() {
     });
 
     return () => unsub();
-  }, []);
+  }, [isAuthenticated]);
 
   const filteredMovies = useMemo(() => {
     if (!searchQuery) {
@@ -73,70 +80,108 @@ export default function AdminDeletePage() {
       });
     }
   };
+  
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Incorrect Password",
+        description: "Please try again.",
+      });
+    }
+    setPassword("");
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
       <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
       <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
         <div className="container max-w-4xl mx-auto">
-          <div className="space-y-4 mb-8">
-            <h1 className="text-3xl font-bold">Delete Videos</h1>
-            <p className="text-muted-foreground">Search for a video by title and delete it from the library.</p>
-            <div className="relative">
-              <Input
-                type="search"
-                placeholder="Search by video title..."
-                className="w-full bg-muted/40 pr-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg animate-pulse">
-                  <div className="h-5 w-3/4 bg-card rounded"></div>
-                  <div className="h-10 w-24 bg-card rounded"></div>
+          {!isAuthenticated ? (
+            <div className="max-w-sm mx-auto pt-10">
+              <h1 className="text-2xl font-bold text-center mb-2">Admin Access Required</h1>
+              <p className="text-muted-foreground text-center mb-6">
+                Please enter the password to manage videos.
+              </p>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter admin password"
+                  />
                 </div>
-              ))}
+                <Button type="submit" className="w-full">Submit</Button>
+              </form>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredMovies.length > 0 ? (
-                filteredMovies.map(movie => (
-                  <div key={movie.id} className="flex items-center justify-between p-3 bg-card rounded-lg border">
-                    <span className="font-medium truncate pr-4">{movie.title}</span>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="destructive" size="sm">
-                           <Trash2 className="mr-2 h-4 w-4" />
-                           Delete
-                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the video
-                             <span className="font-bold"> &quot;{movie.title}&quot;</span>.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteMovie(movie.id)}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                ))
+            <>
+              <div className="space-y-4 mb-8">
+                <h1 className="text-3xl font-bold">Delete Videos</h1>
+                <p className="text-muted-foreground">Search for a video by title and delete it from the library.</p>
+                <div className="relative">
+                  <Input
+                    type="search"
+                    placeholder="Search by video title..."
+                    className="w-full bg-muted/40 pr-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg animate-pulse">
+                      <div className="h-5 w-3/4 bg-card rounded"></div>
+                      <div className="h-10 w-24 bg-card rounded"></div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <p className="text-center text-muted-foreground py-10">No videos found.</p>
+                <div className="space-y-3">
+                  {filteredMovies.length > 0 ? (
+                    filteredMovies.map(movie => (
+                      <div key={movie.id} className="flex items-center justify-between p-3 bg-card rounded-lg border">
+                        <span className="font-medium truncate pr-4">{movie.title}</span>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <Button variant="destructive" size="sm">
+                               <Trash2 className="mr-2 h-4 w-4" />
+                               Delete
+                             </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the video
+                                 <span className="font-bold"> &quot;{movie.title}&quot;</span>.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteMovie(movie.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-muted-foreground py-10">No videos found.</p>
+                  )}
+                </div>
               )}
-            </div>
+            </>
           )}
         </div>
       </main>

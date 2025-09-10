@@ -65,7 +65,7 @@ export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsView
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto snap-y snap-mandatory relative">
+    <div className="h-full w-full overflow-y-auto snap-y snap-mandatory">
       {movies.map((movie, index) => (
         <div
           key={`${movie.id}-${index}`}

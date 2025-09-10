@@ -51,9 +51,8 @@ export default function ShortsPage() {
     moviesFromDb = await fetchYouTubeDataForMovies(moviesFromDb);
     const shortVideosFromDb = moviesFromDb.filter(movie => movie.duration && movie.duration <= 300);
     
-    // Combine, shuffle, and set initial data
-    const combined = [...shortVideosFromDb, ...shortsFromApiData.videos]
-      .sort(() => Math.random() - 0.5);
+    // Combine, with new uploads at the top
+    const combined = [...shortVideosFromDb, ...shortsFromApiData.videos];
 
     // Filter for unique videos
     const uniqueIds = new Set<string>();
@@ -117,8 +116,7 @@ export default function ShortsPage() {
         const moviesWithData = await fetchYouTubeDataForMovies(newMoviesFromDb);
         const filteredNewMoviesFromDb = moviesWithData.filter(m => m.duration && m.duration <= 300);
 
-        const combined = [...filteredNewMoviesFromDb, ...newShortsFromApi]
-          .sort(() => Math.random() - 0.5);
+        const combined = [...filteredNewMoviesFromDb, ...newShortsFromApi];
         
         setShorts(prevShorts => {
             const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url)).filter(Boolean));

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useTransition } from "react";
@@ -32,6 +33,7 @@ import { getYouTubeEmbedUrl } from "@/lib/utils";
 const formSchema = z.object({
   movieTitle: z.string().min(1, "Movie title is required."),
   movieLink: z.string().url("Please enter a valid URL."),
+  thumbnailUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
 });
 
 type AddMovieFormValues = z.infer<typeof formSchema>;
@@ -55,6 +57,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
     defaultValues: {
       movieTitle: "",
       movieLink: "",
+      thumbnailUrl: "",
     },
   });
 
@@ -90,7 +93,11 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
           description: result.message,
         });
         const embedUrl = getYouTubeEmbedUrl(values.movieLink) || values.movieLink;
-        onMovieAdded({ title: values.movieTitle, url: embedUrl });
+        onMovieAdded({ 
+            title: values.movieTitle, 
+            url: embedUrl,
+            thumbnailUrl: values.thumbnailUrl || undefined,
+        });
         handleDialogClose(false);
       } else {
         toast({
@@ -164,6 +171,19 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                         <FormLabel>Video URL</FormLabel>
                         <FormControl>
                           <Input placeholder="https://youtube.com/watch?v=..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="thumbnailUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Thumbnail URL (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://example.com/image.png" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

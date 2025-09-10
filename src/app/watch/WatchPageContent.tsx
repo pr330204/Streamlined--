@@ -11,7 +11,7 @@ import { AddMovieDialog } from '@/components/add-movie-dialog';
 import { Button } from '@/components/ui/button';
 import { Heart, Download, ListPlus, Share2, PlayCircle } from 'lucide-react';
 import { MovieList } from '@/components/movie-list';
-import { getYouTubeEmbedUrl } from '@/lib/utils';
+import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl } from '@/lib/utils';
 import Image from 'next/image';
 import AdMobBanner from '@/components/admob-banner';
 import { fetchYouTubeDataForMovies } from '@/lib/youtube';
@@ -74,12 +74,26 @@ export default function WatchPageContent() {
   }, []);
   
   const embedUrl = useMemo(() => {
-    if (movie?.url) {
-      const url = getYouTubeEmbedUrl(movie.url);
-      return url ? `${url}?autoplay=1&rel=0` : null;
+    if (!movie?.url) return null;
+
+    if (movie.url.includes('drive.google.com')) {
+      return getGoogleDriveEmbedUrl(movie.url);
     }
-    return null;
+    
+    const ytEmbedUrl = getYouTubeEmbedUrl(movie.url);
+    if (ytEmbedUrl && ytEmbedUrl.includes('youtube.com/embed')) {
+        return `${ytEmbedUrl}?autoplay=1&rel=0`;
+    }
+    
+    return null; // For non-embeddable links
   }, [movie?.url]);
+
+  const handleWatchNow = () => {
+    if (movie?.url && !embedUrl) {
+      window.open(movie.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
 
   if (loading) {
     return (
@@ -137,17 +151,24 @@ export default function WatchPageContent() {
       <Header onAddMovieClick={() => setAddMovieOpen(true)} />
       <main className="flex-1">
         <div className="aspect-video overflow-hidden bg-black">
-           {embedUrl && (
+           {embedUrl ? (
               <iframe
                 key={movie.id}
                 width="100%"
                 height="100%"
                 src={embedUrl}
-                title="YouTube video player"
+                title="Video player"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
+           ) : (
+             <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-4">
+                <p className="text-center mb-4">This video cannot be played directly here.</p>
+                <Button onClick={handleWatchNow}>
+                   Watch on original site
+                </Button>
+            </div>
            )}
         </div>
 
@@ -174,7 +195,7 @@ export default function WatchPageContent() {
             </div>
           </div>
 
-          <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg">
+          <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg" onClick={handleWatchNow} disabled={!!embedUrl}>
             <PlayCircle className="mr-2 h-6 w-6" />
             Watch Now
           </Button>

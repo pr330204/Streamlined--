@@ -42,6 +42,16 @@ export function getYouTubeEmbedUrl(url: string): string | null {
   return url; // Fallback to original url if ID extraction fails
 }
 
+export function getGoogleDriveEmbedUrl(url: string): string | null {
+  const regex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+  const match = url.match(regex);
+  if (match && match[1]) {
+    const fileId = match[1];
+    return `https://drive.google.com/file/d/${fileId}/preview`;
+  }
+  return url; // Fallback to original url if ID extraction fails
+}
+
 
 export function getYouTubeThumbnail(url: string): string | null {
   const videoId = getYouTubeVideoId(url);

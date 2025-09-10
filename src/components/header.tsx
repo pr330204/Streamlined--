@@ -1,12 +1,19 @@
+
 "use client";
 
-import { Play, Plus, Search, ArrowLeft, Mic, MicOff } from "lucide-react";
+import { Play, Plus, Search, ArrowLeft, Mic, MicOff, Trash2, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from 'next/navigation';
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   onAddMovieClick: () => void;
@@ -108,6 +115,53 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
     onSearch?.(e.target.value);
   }
 
+  const AddMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Add
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onAddMovieClick}>
+          <Video className="mr-2 h-4 w-4" />
+          <span>Add Video</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/admin/delete">
+            <Trash2 className="mr-2 h-4 w-4" />
+            <span>Delete Video</span>
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const AddMenuMobile = () => (
+     <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="icon" className="rounded-full">
+            <Plus className="h-5 w-5" />
+            <span className="sr-only">Add</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onAddMovieClick}>
+          <Video className="mr-2 h-4 w-4" />
+          <span>Add Video</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/admin/delete">
+            <Trash2 className="mr-2 h-4 w-4" />
+            <span>Delete Video</span>
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+
   if (isWatchPage) {
      return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-card/80 backdrop-blur-lg">
@@ -124,10 +178,8 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
               </Link>
             </div>
             <div className="flex flex-1 items-center justify-end space-x-2">
-               <Button onClick={onAddMovieClick}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Video
-              </Button>
+               <div className="hidden sm:inline-flex"><AddMenu /></div>
+               <div className="sm:hidden"><AddMenuMobile /></div>
             </div>
           </div>
         </header>
@@ -174,14 +226,8 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
                 <span className="sr-only">Search</span>
             </Button>
             
-            <Button onClick={onAddMovieClick} className="hidden sm:inline-flex">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Video
-            </Button>
-            <Button onClick={onAddMovieClick} size="icon" className="sm:hidden rounded-full">
-              <Plus className="h-5 w-5" />
-              <span className="sr-only">Add Video</span>
-            </Button>
+            <div className="hidden sm:inline-flex"><AddMenu /></div>
+            <div className="sm:hidden"><AddMenuMobile /></div>
         </div>
       </div>
     </header>

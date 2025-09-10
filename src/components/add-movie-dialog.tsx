@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { checkMovieLinkAction } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
 import type { Movie } from "@/lib/types";
-import { getYouTubeEmbedUrl, getYouTubeVideoId } from "@/lib/utils";
+import { getYouTubeVideoId } from "@/lib/utils";
 
 const formSchema = z.object({
   movieTitle: z.string().min(1, "Movie title is required."),

@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { checkMovieLinkAction } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
 import type { Movie } from "@/lib/types";
-import { getYouTubeEmbedUrl } from "@/lib/utils";
+import { getYouTubeEmbedUrl, getYouTubeVideoId } from "@/lib/utils";
 
 const formSchema = z.object({
   movieTitle: z.string().min(1, "Movie title is required."),
@@ -92,11 +92,13 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
           title: "Success!",
           description: result.message,
         });
-        const embedUrl = getYouTubeEmbedUrl(values.movieLink) || values.movieLink;
+        
+        const isYouTubeVideo = !!getYouTubeVideoId(values.movieLink);
+        
         onMovieAdded({ 
             title: values.movieTitle, 
-            url: embedUrl,
-            thumbnailUrl: values.thumbnailUrl || undefined,
+            url: values.movieLink,
+            thumbnailUrl: isYouTubeVideo ? undefined : values.thumbnailUrl || undefined,
         });
         handleDialogClose(false);
       } else {

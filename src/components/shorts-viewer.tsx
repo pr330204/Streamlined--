@@ -29,13 +29,22 @@ export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsView
       if (index === -1) return;
 
       if (entry.isIntersecting) {
-        setActivePlayerIndex(index);
+        setActivePlayerIndex(prevIndex => {
+          if (prevIndex !== null && prevIndex !== index) {
+            const oldPlayer = playerRefs[prevIndex]?.current;
+            if (oldPlayer && typeof oldPlayer.pauseVideo === 'function') {
+              oldPlayer.pauseVideo();
+            }
+          }
+          return index;
+        });
+
         if (index === movies.length - 2 && !isLoadingMore) { 
           onEndReached();
         }
       }
     });
-  }, [movies.length, onEndReached, isLoadingMore]);
+  }, [movies.length, onEndReached, isLoadingMore, playerRefs]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(handleIntersection, { threshold: 0.7 });

@@ -29,11 +29,12 @@ import { checkMovieLinkAction } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
 import type { Movie } from "@/lib/types";
 import { getYouTubeVideoId } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formSchema = z.object({
   movieTitle: z.string().min(1, "Movie title is required."),
   movieLink: z.string().url("Please enter a valid URL."),
-  thumbnailUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
+  thumbnailUrl: z.string().url("Please enter a valid URL for the thumbnail.").optional().or(z.literal('')),
 });
 
 type AddMovieFormValues = z.infer<typeof formSchema>;
@@ -50,6 +51,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   const [isPending, startTransition] = useTransition();
   const [view, setView] = useState<"password" | "form">("password");
   const [password, setPassword] = useState("");
+  const [activeTab, setActiveTab] = useState("youtube");
   const { toast } = useToast();
 
   const form = useForm<AddMovieFormValues>({
@@ -65,6 +67,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
     if (!open) {
       form.reset();
       setPassword("");
+      setActiveTab("youtube");
       setView("password"); // Reset to password view on close
     }
     onOpenChange(open);
@@ -86,6 +89,12 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
 
   const onSubmit = (values: AddMovieFormValues) => {
     startTransition(async () => {
+      // Custom validation for Google Drive thumbnail
+      if (activeTab === "google-drive" && !values.thumbnailUrl) {
+        form.setError("thumbnailUrl", { type: "manual", message: "Thumbnail URL is required for Google Drive links." });
+        return;
+      }
+
       const result = await checkMovieLinkAction(values);
       if (result.success) {
         toast({
@@ -146,52 +155,86 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
             <DialogHeader>
               <DialogTitle>Add a New Video</DialogTitle>
               <DialogDescription>
-                Enter the video title and a valid link.
+                Select the video source and enter the details.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="space-y-4 py-4">
-                  <FormField
-                    control={form.control}
-                    name="movieTitle"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Video Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., The Social Network Trailer" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="movieLink"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Video URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://youtube.com/watch?v=..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="thumbnailUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Thumbnail URL (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://example.com/image.png" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pt-4">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="youtube">YouTube</TabsTrigger>
+                    <TabsTrigger value="google-drive">Google Drive</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="youtube" className="space-y-4 py-4">
+                     <FormField
+                        control={form.control}
+                        name="movieTitle"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Video Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., The Social Network Trailer" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="movieLink"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>YouTube URL</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://youtube.com/watch?v=..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                  </TabsContent>
+                  <TabsContent value="google-drive" className="space-y-4 py-4">
+                     <FormField
+                        control={form.control}
+                        name="movieTitle"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Video Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., My Awesome Movie" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="movieLink"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Google Drive URL</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://drive.google.com/file/d/..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="thumbnailUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Thumbnail URL</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://example.com/image.png" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                  </TabsContent>
+                </Tabs>
                 <DialogFooter>
                   <Button type="button" variant="ghost" onClick={() => handleDialogClose(false)}>
                     Cancel

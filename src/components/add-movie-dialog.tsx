@@ -99,7 +99,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
       if (result.success) {
         toast({
           title: "Success!",
-          description: result.message,
+          description: "Video added successfully.",
         });
         
         const isYouTubeVideo = !!getYouTubeVideoId(values.movieLink);

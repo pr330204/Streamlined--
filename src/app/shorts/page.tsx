@@ -13,6 +13,17 @@ import { getYouTubeVideoId } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
+// Helper to shuffle array
+function shuffle<T>(array: T[]): T[] {
+  let currentIndex = array.length, randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+}
+
 export default function ShortsPage() {
   const [shorts, setShorts] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,8 +62,8 @@ export default function ShortsPage() {
     moviesFromDb = await fetchYouTubeDataForMovies(moviesFromDb);
     const shortVideosFromDb = moviesFromDb.filter(movie => movie.duration && movie.duration <= 300);
     
-    // Combine, with new uploads at the top
-    const combined = [...shortVideosFromDb, ...shortsFromApiData.videos];
+    // Combine and shuffle
+    const combined = shuffle([...shortVideosFromDb, ...shortsFromApiData.videos]);
 
     // Filter for unique videos
     const uniqueIds = new Set<string>();
@@ -116,7 +127,7 @@ export default function ShortsPage() {
         const moviesWithData = await fetchYouTubeDataForMovies(newMoviesFromDb);
         const filteredNewMoviesFromDb = moviesWithData.filter(m => m.duration && m.duration <= 300);
 
-        const combined = [...filteredNewMoviesFromDb, ...newShortsFromApi];
+        const combined = shuffle([...filteredNewMoviesFromDb, ...newShortsFromApi]);
         
         setShorts(prevShorts => {
             const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url)).filter(Boolean) as string[]);

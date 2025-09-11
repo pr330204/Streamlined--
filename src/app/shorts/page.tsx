@@ -64,14 +64,17 @@ export default function ShortsPage() {
         return false;
     });
 
+    // Filter for videos under 5 minutes (300 seconds)
+    const shortVideos = uniqueShorts.filter(movie => !movie.duration || movie.duration < 300);
+
     // Sort by date, newest first
-    uniqueShorts.sort((a, b) => {
+    shortVideos.sort((a, b) => {
         const dateA = new Date(a.createdAt as string).getTime();
         const dateB = new Date(b.createdAt as string).getTime();
         return dateB - dateA;
     });
     
-    setShorts(uniqueShorts);
+    setShorts(shortVideos);
     setLoading(false);
   }, []);
 
@@ -133,7 +136,9 @@ export default function ShortsPage() {
                 }
                 return false;
             });
-            return [...prevShorts, ...uniqueNewShorts];
+            // Filter for videos under 5 minutes
+            const shortVideos = uniqueNewShorts.filter(movie => !movie.duration || movie.duration < 300);
+            return [...prevShorts, ...shortVideos];
         });
     }
 

@@ -31,7 +31,7 @@ export default function ShortsPage() {
     const firstBatchQuery = query(collection(db, "movies"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
     const documentSnapshots = await getDocs(firstBatchQuery);
     
-    let moviesFromDb = documentSnapshots.docs.map(doc => {
+    const moviesFromDb = documentSnapshots.docs.map(doc => {
       const data = doc.data();
       return { 
         id: doc.id, 
@@ -48,12 +48,10 @@ export default function ShortsPage() {
     setNextPageToken(shortsFromApiData.nextPageToken);
 
     // Fetch details for DB movies that are from YouTube
-    const youtubeMoviesFromDb = moviesFromDb.filter(movie => getYouTubeVideoId(movie.url));
-    const otherMoviesFromDb = moviesFromDb.filter(movie => !getYouTubeVideoId(movie.url));
-    const youtubeMoviesWithData = await fetchYouTubeDataForMovies(youtubeMoviesFromDb);
+    const moviesWithData = await fetchYouTubeDataForMovies(moviesFromDb);
     
     // Combine all sources
-    const combined = [...youtubeMoviesWithData, ...otherMoviesFromDb, ...shortsFromApiData.videos];
+    const combined = [...moviesWithData, ...shortsFromApiData.videos];
 
     // Filter for unique videos
     const uniqueIds = new Set<string>();
@@ -121,11 +119,9 @@ export default function ShortsPage() {
         setHasMore(false);
     } else {
         // Fetch details for new DB items that are from YouTube
-        const newYoutubeMoviesFromDb = newMoviesFromDb.filter(movie => getYouTubeVideoId(movie.url));
-        const newOtherMoviesFromDb = newMoviesFromDb.filter(movie => !getYouTubeVideoId(movie.url));
-        const newYoutubeMoviesWithData = await fetchYouTubeDataForMovies(newYoutubeMoviesFromDb);
+        const newMoviesWithData = await fetchYouTubeDataForMovies(newMoviesFromDb);
 
-        const combined = [...newYoutubeMoviesWithData, ...newOtherMoviesFromDb, ...newShortsFromApi];
+        const combined = [...newMoviesWithData, ...newShortsFromApi];
         
         setShorts(prevShorts => {
             const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url) || s.id));

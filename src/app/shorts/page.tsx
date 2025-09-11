@@ -58,7 +58,7 @@ export default function ShortsPage() {
     // Filter for unique videos
     const uniqueIds = new Set<string>();
     const uniqueShorts = combined.filter(movie => {
-        const videoId = movie.id; // Use Firestore doc ID for uniqueness for uploaded videos
+        const videoId = getYouTubeVideoId(movie.url) || movie.id; 
         if (videoId && !uniqueIds.has(videoId)) {
             uniqueIds.add(videoId);
             return true;
@@ -128,9 +128,9 @@ export default function ShortsPage() {
         const combined = [...newYoutubeMoviesWithData, ...newOtherMoviesFromDb, ...newShortsFromApi];
         
         setShorts(prevShorts => {
-            const existingIds = new Set(prevShorts.map(s => s.id));
+            const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url) || s.id));
             const uniqueNewShorts = combined.filter(movie => {
-                const videoId = movie.id;
+                const videoId = getYouTubeVideoId(movie.url) || movie.id;
                 if (videoId && !existingIds.has(videoId)) {
                     existingIds.add(videoId);
                     return true;

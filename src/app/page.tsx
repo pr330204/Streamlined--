@@ -65,11 +65,17 @@ export default function Home() {
 
 
   const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
-    await addDoc(collection(db, "movies"), {
+    const movieData: any = {
       ...movie,
       votes: 0,
       createdAt: serverTimestamp(),
-    });
+    };
+
+    if (!movieData.thumbnailUrl) {
+      delete movieData.thumbnailUrl;
+    }
+    
+    await addDoc(collection(db, "movies"), movieData);
   };
 
   return (

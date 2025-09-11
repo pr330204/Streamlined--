@@ -38,7 +38,7 @@ export default function ShortsPage() {
         ...data,
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
       } as Movie
-    }).filter(movie => getYouTubeVideoId(movie.url));
+    });
     
     const lastVisibleDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
     setLastVisible(lastVisibleDoc);
@@ -47,17 +47,18 @@ export default function ShortsPage() {
     const shortsFromApiData = await fetchYouTubeShorts("trending shorts");
     setNextPageToken(shortsFromApiData.nextPageToken);
 
-    // Fetch details for DB movies
-    moviesFromDb = await fetchYouTubeDataForMovies(moviesFromDb);
-    const shortVideosFromDb = moviesFromDb.filter(movie => movie.duration && movie.duration <= 300);
+    // Fetch details for DB movies that are from YouTube
+    const youtubeMoviesFromDb = moviesFromDb.filter(movie => getYouTubeVideoId(movie.url));
+    const otherMoviesFromDb = moviesFromDb.filter(movie => !getYouTubeVideoId(movie.url));
+    const youtubeMoviesWithData = await fetchYouTubeDataForMovies(youtubeMoviesFromDb);
     
-    // Combine
-    const combined = [...shortVideosFromDb, ...shortsFromApiData.videos];
+    // Combine all sources
+    const combined = [...youtubeMoviesWithData, ...otherMoviesFromDb, ...shortsFromApiData.videos];
 
     // Filter for unique videos
     const uniqueIds = new Set<string>();
     const uniqueShorts = combined.filter(movie => {
-        const videoId = getYouTubeVideoId(movie.url);
+        const videoId = movie.id; // Use Firestore doc ID for uniqueness for uploaded videos
         if (videoId && !uniqueIds.has(videoId)) {
             uniqueIds.add(videoId);
             return true;
@@ -103,7 +104,7 @@ export default function ShortsPage() {
           ...data,
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
-      }).filter(movie => getYouTubeVideoId(movie.url));
+      });
       
       const newLastVisible = documentSnapshots.docs[documentSnapshots.docs.length - 1];
       setLastVisible(newLastVisible || null);
@@ -119,16 +120,17 @@ export default function ShortsPage() {
     if(newMoviesFromDb.length === 0 && newShortsFromApi.length === 0) {
         setHasMore(false);
     } else {
-        // Fetch details for new DB items and filter
-        const moviesWithData = await fetchYouTubeDataForMovies(newMoviesFromDb);
-        const filteredNewMoviesFromDb = moviesWithData.filter(m => m.duration && m.duration <= 300);
+        // Fetch details for new DB items that are from YouTube
+        const newYoutubeMoviesFromDb = newMoviesFromDb.filter(movie => getYouTubeVideoId(movie.url));
+        const newOtherMoviesFromDb = newMoviesFromDb.filter(movie => !getYouTubeVideoId(movie.url));
+        const newYoutubeMoviesWithData = await fetchYouTubeDataForMovies(newYoutubeMoviesFromDb);
 
-        const combined = [...filteredNewMoviesFromDb, ...newShortsFromApi];
+        const combined = [...newYoutubeMoviesWithData, ...newOtherMoviesFromDb, ...newShortsFromApi];
         
         setShorts(prevShorts => {
-            const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url)).filter(Boolean) as string[]);
+            const existingIds = new Set(prevShorts.map(s => s.id));
             const uniqueNewShorts = combined.filter(movie => {
-                const videoId = getYouTubeVideoId(movie.url);
+                const videoId = movie.id;
                 if (videoId && !existingIds.has(videoId)) {
                     existingIds.add(videoId);
                     return true;
@@ -155,7 +157,7 @@ export default function ShortsPage() {
   return (
     <div className="flex h-screen w-full flex-col bg-black text-foreground">
        <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
-       <main className="flex-1 relative">
+       <main className="flex-1 snap-y snap-mandatory overflow-y-auto">
          {loading ? (
             <div className="flex items-center justify-center h-full">
                 <div className="w-full max-w-sm aspect-[9/16] bg-muted rounded-lg animate-pulse"></div>

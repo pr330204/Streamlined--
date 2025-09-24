@@ -5,11 +5,11 @@ import type { Movie } from "@/lib/types";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy, Timestamp, limit, startAfter, getDocs, DocumentSnapshot } from "firebase/firestore";
-import { fetchYouTubeDataForMovies, fetchYouTubeShorts, YouTubeShortsResponse } from "@/lib/youtube";
+import { fetchYouTubeDataForMovies, fetchYouTubeShorts } from "@/lib/youtube";
 import { ShortsViewer } from "@/components/shorts-viewer";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
-import { getYouTubeVideoId } from "@/lib/utils";
+import { getYouTubeVideoId, isPlayableOrGoogleDrive } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
@@ -47,7 +47,6 @@ export default function ShortsPage() {
     const shortsFromApiData = await fetchYouTubeShorts("trending shorts");
     setNextPageToken(shortsFromApiData.nextPageToken);
 
-    // Fetch details for DB movies that are from YouTube
     const moviesWithData = await fetchYouTubeDataForMovies(moviesFromDb);
     
     // Combine all sources
@@ -64,10 +63,8 @@ export default function ShortsPage() {
         return false;
     });
 
-    // Filter for videos under 5 minutes (300 seconds)
     const shortVideos = uniqueShorts.filter(movie => !movie.duration || movie.duration < 300);
 
-    // Sort by date, newest first
     shortVideos.sort((a, b) => {
         const dateA = new Date(a.createdAt as string).getTime();
         const dateB = new Date(b.createdAt as string).getTime();
@@ -121,7 +118,6 @@ export default function ShortsPage() {
     if(newMoviesFromDb.length === 0 && newShortsFromApi.length === 0) {
         setHasMore(false);
     } else {
-        // Fetch details for new DB items that are from YouTube
         const newMoviesWithData = await fetchYouTubeDataForMovies(newMoviesFromDb);
 
         const combined = [...newMoviesWithData, ...newShortsFromApi];
@@ -136,7 +132,6 @@ export default function ShortsPage() {
                 }
                 return false;
             });
-            // Filter for videos under 5 minutes
             const shortVideos = uniqueNewShorts.filter(movie => !movie.duration || movie.duration < 300);
             return [...prevShorts, ...shortVideos];
         });
@@ -158,7 +153,7 @@ export default function ShortsPage() {
   return (
     <div className="flex h-screen w-full flex-col bg-black text-foreground">
        <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
-       <main className="flex-1 snap-y snap-mandatory overflow-y-auto">
+       <main className="flex-1 overflow-hidden">
          {loading ? (
             <div className="flex items-center justify-center h-full">
                 <div className="w-full max-w-sm aspect-[9/16] bg-muted rounded-lg animate-pulse"></div>
@@ -174,7 +169,7 @@ export default function ShortsPage() {
        <AddMovieDialog
         isOpen={isAddMovieOpen}
         onOpenChange={setAddMovieOpen}
-        onMovieAdded={() => { /* handle movie added if necessary */ }}
+        onMovieAdded={() => { loadInitialShorts() }}
       />
     </div>
   );

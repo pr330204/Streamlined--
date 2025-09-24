@@ -4,12 +4,12 @@
 import type { Movie } from "@/lib/types";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, orderBy, Timestamp, limit, startAfter, getDocs, DocumentSnapshot } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, startAfter, Timestamp, type DocumentSnapshot } from "firebase/firestore";
 import { fetchYouTubeDataForMovies, fetchYouTubeShorts } from "@/lib/youtube";
 import { ShortsViewer } from "@/components/shorts-viewer";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
-import { getYouTubeVideoId, isPlayableOrGoogleDrive } from "@/lib/utils";
+import { getYouTubeVideoId } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
@@ -31,7 +31,7 @@ export default function ShortsPage() {
     const firstBatchQuery = query(collection(db, "movies"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
     const documentSnapshots = await getDocs(firstBatchQuery);
     
-    const moviesFromDb = documentSnapshots.docs.map(doc => {
+    let moviesFromDb = documentSnapshots.docs.map(doc => {
       const data = doc.data();
       return { 
         id: doc.id, 
@@ -63,7 +63,7 @@ export default function ShortsPage() {
         return false;
     });
 
-    const shortVideos = uniqueShorts.filter(movie => !movie.duration || movie.duration < 300);
+    const shortVideos = uniqueShorts.filter(movie => movie.duration && movie.duration < 300);
 
     shortVideos.sort((a, b) => {
         const dateA = new Date(a.createdAt as string).getTime();
@@ -119,7 +119,6 @@ export default function ShortsPage() {
         setHasMore(false);
     } else {
         const newMoviesWithData = await fetchYouTubeDataForMovies(newMoviesFromDb);
-
         const combined = [...newMoviesWithData, ...newShortsFromApi];
         
         setShorts(prevShorts => {
@@ -132,7 +131,7 @@ export default function ShortsPage() {
                 }
                 return false;
             });
-            const shortVideos = uniqueNewShorts.filter(movie => !movie.duration || movie.duration < 300);
+            const shortVideos = uniqueNewShorts.filter(movie => movie.duration && movie.duration < 300);
             return [...prevShorts, ...shortVideos];
         });
     }
@@ -153,7 +152,7 @@ export default function ShortsPage() {
   return (
     <div className="flex h-screen w-full flex-col bg-black text-foreground">
        <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
-       <main className="flex-1 overflow-hidden">
+       <main className="flex-1">
          {loading ? (
             <div className="flex items-center justify-center h-full">
                 <div className="w-full max-w-sm aspect-[9/16] bg-muted rounded-lg animate-pulse"></div>

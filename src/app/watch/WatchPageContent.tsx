@@ -71,9 +71,7 @@ export default function WatchPageContent() {
         } as Movie;
       });
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesData);
-      // Filter for videos longer than 5 minutes (300 seconds)
-      const longVideos = moviesWithYTData.filter(movie => movie.duration && movie.duration > 300);
-      setSuggestedMovies(longVideos);
+      setSuggestedMovies(moviesWithYTData);
     });
 
     return () => unsub();

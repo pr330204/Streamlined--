@@ -103,12 +103,10 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
           description: "Video added successfully.",
         });
         
-        const isYouTubeVideo = !!getYouTubeVideoId(values.movieLink);
-        
         onMovieAdded({ 
             title: values.movieTitle, 
             url: values.movieLink,
-            thumbnailUrl: isYouTubeVideo ? undefined : values.thumbnailUrl || undefined,
+            thumbnailUrl: values.thumbnailUrl || undefined,
         });
         handleDialogClose(false);
       } else {
@@ -258,6 +256,19 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                             <FormLabel>Stream URL (.m3u8)</FormLabel>
                             <FormControl>
                               <Input placeholder="https://example.com/stream.m3u8" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="thumbnailUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Thumbnail URL (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://example.com/image.png" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

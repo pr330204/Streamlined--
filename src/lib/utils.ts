@@ -39,7 +39,7 @@ export function getYouTubeEmbedUrl(url: string): string | null {
   if (videoId) {
     return `https://www.youtube.com/embed/${videoId}`;
   }
-  return url; // Fallback to original url if ID extraction fails
+  return null;
 }
 
 export function getGoogleDriveEmbedUrl(url: string): string | null {
@@ -49,7 +49,7 @@ export function getGoogleDriveEmbedUrl(url: string): string | null {
     const fileId = match[1];
     return `https://drive.google.com/file/d/${fileId}/preview`;
   }
-  return url; // Fallback to original url if ID extraction fails
+  return null;
 }
 
 
@@ -114,10 +114,13 @@ export function parseISO8601Duration(duration: string): number {
   return (hours * 3600) + (minutes * 60) + seconds;
 }
 
+export const isLiveStream = (url: string) => url.endsWith('.m3u8');
 
 export function isPlayableOrGoogleDrive(url: string): boolean {
   if (!url) return false;
   
+  if (isLiveStream(url)) return true;
+
   const isYouTube = !!getYouTubeVideoId(url);
   
   let isGoogleDrive = false;
@@ -125,7 +128,6 @@ export function isPlayableOrGoogleDrive(url: string): boolean {
     const urlObj = new URL(url);
     isGoogleDrive = urlObj.hostname.includes('drive.google.com');
   } catch (error) {
-    // Fallback for non-URL strings
     isGoogleDrive = url.includes('drive.google.com');
   }
 

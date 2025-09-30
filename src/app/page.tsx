@@ -30,16 +30,15 @@ export default function Home() {
         } as Movie
       });
       
-      const playableOrGDriveMovies = moviesFromDb.filter(movie => isPlayableOrGoogleDrive(movie.url));
+      const playableMovies = moviesFromDb.filter(movie => isPlayableOrGoogleDrive(movie.url));
       
-      const youtubeMovies = playableOrGDriveMovies.filter(movie => getYouTubeVideoId(movie.url));
-      const otherMovies = playableOrGDriveMovies.filter(movie => !getYouTubeVideoId(movie.url));
+      const youtubeMovies = playableMovies.filter(movie => getYouTubeVideoId(movie.url));
+      const otherMovies = playableMovies.filter(movie => !getYouTubeVideoId(movie.url));
 
       fetchYouTubeDataForMovies(youtubeMovies).then(ytMoviesWithData => {
          const allMovies = [...ytMoviesWithData, ...otherMovies];
          const longVideos = allMovies.filter(movie => !movie.duration || movie.duration > 300);
          
-         // Sort all movies by creation date after processing
          longVideos.sort((a, b) => {
             const dateA = new Date(a.createdAt as string).getTime();
             const dateB = new Date(b.createdAt as string).getTime();

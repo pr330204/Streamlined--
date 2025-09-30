@@ -9,7 +9,7 @@ import { fetchYouTubeDataForMovies, fetchYouTubeShorts } from "@/lib/youtube";
 import { ShortsViewer } from "@/components/shorts-viewer";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
-import { getYouTubeVideoId } from "@/lib/utils";
+import { getYouTubeVideoId, isPlayableOrGoogleDrive } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
@@ -27,7 +27,6 @@ export default function ShortsPage() {
   const loadInitialShorts = useCallback(async () => {
     setLoading(true);
 
-    // Fetch from Firebase
     const firstBatchQuery = query(collection(db, "movies"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
     const documentSnapshots = await getDocs(firstBatchQuery);
     
@@ -38,21 +37,18 @@ export default function ShortsPage() {
         ...data,
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
       } as Movie
-    });
+    }).filter(movie => isPlayableOrGoogleDrive(movie.url));
     
     const lastVisibleDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
     setLastVisible(lastVisibleDoc);
 
-    // Fetch from YouTube API
     const shortsFromApiData = await fetchYouTubeShorts("trending shorts");
     setNextPageToken(shortsFromApiData.nextPageToken);
 
     const moviesWithData = await fetchYouTubeDataForMovies(moviesFromDb);
     
-    // Combine all sources
     const combined = [...moviesWithData, ...shortsFromApiData.videos];
 
-    // Filter for unique videos
     const uniqueIds = new Set<string>();
     const uniqueShorts = combined.filter(movie => {
         const videoId = getYouTubeVideoId(movie.url) || movie.id; 
@@ -86,7 +82,6 @@ export default function ShortsPage() {
     let newMoviesFromDb: Movie[] = [];
     let newShortsFromApi: Movie[] = [];
 
-    // Fetch more from Firebase
     if (lastVisible) {
       const nextBatchQuery = query(
         collection(db, "movies"), 
@@ -102,13 +97,12 @@ export default function ShortsPage() {
           ...data,
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
-      });
+      }).filter(movie => isPlayableOrGoogleDrive(movie.url));
       
       const newLastVisible = documentSnapshots.docs[documentSnapshots.docs.length - 1];
       setLastVisible(newLastVisible || null);
     }
 
-    // Fetch more from YouTube API
     if (nextPageToken) {
       const shortsFromApiData = await fetchYouTubeShorts("trending shorts", nextPageToken);
       newShortsFromApi = shortsFromApiData.videos;

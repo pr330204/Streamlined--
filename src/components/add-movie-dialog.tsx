@@ -62,7 +62,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
       thumbnailUrl: "",
     },
   });
-
+  
   const handleDialogClose = (open: boolean) => {
     if (!open) {
       form.reset();
@@ -94,8 +94,9 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
         form.setError("thumbnailUrl", { type: "manual", message: "Thumbnail URL is required for Google Drive links." });
         return;
       }
-
+      
       const result = await checkMovieLinkAction(values);
+
       if (result.success) {
         toast({
           title: "Success!",
@@ -161,9 +162,10 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pt-4">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="youtube">YouTube</TabsTrigger>
                     <TabsTrigger value="google-drive">Google Drive</TabsTrigger>
+                    <TabsTrigger value="live-stream">Live Stream</TabsTrigger>
                   </TabsList>
                   <TabsContent value="youtube" className="space-y-4 py-4">
                      <FormField
@@ -228,6 +230,34 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                             <FormLabel>Thumbnail URL</FormLabel>
                             <FormControl>
                               <Input placeholder="https://example.com/image.png" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                  </TabsContent>
+                   <TabsContent value="live-stream" className="space-y-4 py-4">
+                     <FormField
+                        control={form.control}
+                        name="movieTitle"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stream Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Live News Channel" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="movieLink"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stream URL (.m3u8)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://example.com/stream.m3u8" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

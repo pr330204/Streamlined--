@@ -11,10 +11,11 @@ import { AddMovieDialog } from '@/components/add-movie-dialog';
 import { Button } from '@/components/ui/button';
 import { Heart, Download, ListPlus, Share2, PlayCircle } from 'lucide-react';
 import { MovieList } from '@/components/movie-list';
-import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl } from '@/lib/utils';
+import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl, isLiveStream } from '@/lib/utils';
 import Image from 'next/image';
 import AdMobBanner from '@/components/admob-banner';
 import { fetchYouTubeDataForMovies } from '@/lib/youtube';
+import ReactPlayer from 'react-player';
 
 export default function WatchPageContent() {
   const searchParams = useSearchParams();
@@ -23,7 +24,12 @@ export default function WatchPageContent() {
   const [suggestedMovies, setSuggestedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMovieOpen, setAddMovieOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
   useEffect(() => {
     if (!docId) {
       setLoading(false);
@@ -81,11 +87,16 @@ export default function WatchPageContent() {
     }
     
     const ytEmbedUrl = getYouTubeEmbedUrl(movie.url);
-    if (ytEmbedUrl && ytEmbedUrl.includes('youtube.com/embed')) {
+    if (ytEmbedUrl) {
         return `${ytEmbedUrl}?autoplay=1&rel=0`;
     }
     
-    return null; // For non-embeddable links
+    return null; // For non-embeddable or live stream links
+  }, [movie?.url]);
+
+  const canPlayDirectly = useMemo(() => {
+     if (!movie?.url) return false;
+     return ReactPlayer.canPlay(movie.url) || !!getYouTubeEmbedUrl(movie.url) || !!getGoogleDriveEmbedUrl(movie.url);
   }, [movie?.url]);
 
   const handleWatchNow = () => {
@@ -151,17 +162,28 @@ export default function WatchPageContent() {
       <Header onAddMovieClick={() => setAddMovieOpen(true)} />
       <main className="flex-1">
         <div className="aspect-video overflow-hidden bg-black">
-           {embedUrl ? (
-              <iframe
-                key={movie.id}
-                width="100%"
-                height="100%"
-                src={embedUrl}
-                title="Video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+           {isClient && canPlayDirectly ? (
+              isLiveStream(movie.url) || !embedUrl ? (
+                 <ReactPlayer
+                    key={movie.id}
+                    url={movie.url}
+                    width="100%"
+                    height="100%"
+                    playing={true}
+                    controls={true}
+                 />
+              ) : (
+                <iframe
+                  key={movie.id}
+                  width="100%"
+                  height="100%"
+                  src={embedUrl}
+                  title="Video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              )
            ) : (
              <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-4">
                 <p className="text-center mb-4">This video cannot be played directly here.</p>
@@ -176,7 +198,7 @@ export default function WatchPageContent() {
           <div className="flex gap-4 items-start">
             <div className="flex-1 space-y-2">
               <h1 className="text-2xl font-bold">{movie.title}</h1>
-              {metadata.map(item => (
+              {!isLiveStream(movie.url) && metadata.map(item => (
                 <div key={item.label} className="text-sm">
                   <span className="font-semibold text-primary">{item.label}: </span>
                   <span className="text-muted-foreground">{item.value}</span>

@@ -60,7 +60,7 @@ export default function WatchPageContent() {
   }, [docId]);
 
   useEffect(() => {
-    const q = query(collection(db, "movies"), orderBy("votes", "desc"), limit(10));
+    const q = query(collection(db, "movies"), orderBy("votes", "desc"), limit(20)); // Fetch more to have enough after filtering
     const unsub = onSnapshot(q, async (snapshot) => {
       const moviesData = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -71,7 +71,11 @@ export default function WatchPageContent() {
         } as Movie;
       });
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesData);
-      setSuggestedMovies(moviesWithYTData);
+      
+      // Filter out short videos (duration < 5 minutes)
+      const longVideos = moviesWithYTData.filter(m => !m.duration || m.duration >= 300);
+
+      setSuggestedMovies(longVideos.slice(0, 10)); // Limit to 10 after filtering
     });
 
     return () => unsub();

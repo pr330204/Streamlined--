@@ -16,6 +16,8 @@ import Image from 'next/image';
 import AdMobBanner from '@/components/admob-banner';
 import { fetchYouTubeDataForMovies } from '@/lib/youtube';
 import ReactPlayer from 'react-player';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function WatchPageContent() {
   const searchParams = useSearchParams();
@@ -26,6 +28,8 @@ export default function WatchPageContent() {
   const [isAddMovieOpen, setAddMovieOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
+  const { toast } = useToast();
+
 
   useEffect(() => {
     setIsClient(true);
@@ -108,6 +112,36 @@ export default function WatchPageContent() {
       } else {
         window.open(movie.url, '_blank', 'noopener,noreferrer');
       }
+    }
+  };
+
+  const handleShare = async () => {
+    if (!movie) return;
+
+    const shareUrl = `${window.location.origin}/watch?v=${movie.id}`;
+    const shareData = {
+      title: movie.title,
+      text: `Check out this video: ${movie.title}`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: "Link Copied",
+          description: "The video link has been copied to your clipboard.",
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+      toast({
+        variant: "destructive",
+        title: "Sharing Failed",
+        description: "Could not share the video at this time.",
+      });
     }
   };
 
@@ -240,7 +274,7 @@ export default function WatchPageContent() {
             </div>
           </div>
 
-          <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg" onClick={handleWatchNow}>
+          <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg" onClick={() => setShowPlayer(!showPlayer)}>
             <PlayCircle className="mr-2 h-6 w-6" />
             {showPlayer ? 'Close Player' : 'Watch Now'}
           </Button>
@@ -250,22 +284,22 @@ export default function WatchPageContent() {
           </div>
           
           <div className="flex justify-around text-center py-2">
-            <div className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
+            <button className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
               <Heart className="h-6 w-6"/>
               <span className="text-xs font-semibold">Like</span>
-            </div>
-             <div className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
+            </button>
+             <button className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
               <Download className="h-6 w-6"/>
               <span className="text-xs font-semibold">Download</span>
-            </div>
-             <div className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
+            </button>
+             <button className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
               <ListPlus className="h-6 w-6"/>
               <span className="text-xs font-semibold">My List</span>
-            </div>
-             <div className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
+            </button>
+             <button onClick={handleShare} className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
               <Share2 className="h-6 w-6"/>
               <span className="text-xs font-semibold">Share</span>
-            </div>
+            </button>
           </div>
 
           <div>
@@ -279,5 +313,3 @@ export default function WatchPageContent() {
     </div>
   );
 }
-
-    

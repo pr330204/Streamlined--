@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Movie } from "@/lib/types";
@@ -58,7 +59,7 @@ export function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
         </div>
         <div className="flex gap-3 mt-2">
            <Avatar className="h-9 w-9 mt-0.5">
-               <AvatarImage src={movie.channelThumbnailUrl || "https://placehold.co/36x36.png"} data-ai-hint="logo" />
+               <AvatarImage src={movie.channelThumbnailUrl || movie.thumbnailUrl || "https://placehold.co/36x36.png"} data-ai-hint="logo" />
                <AvatarFallback>{channelLetter}</AvatarFallback>
            </Avatar>
            <div className="flex-grow">
@@ -74,3 +75,4 @@ export function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
     </Link>
   );
 }
+

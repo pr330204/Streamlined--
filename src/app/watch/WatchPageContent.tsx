@@ -65,7 +65,7 @@ export default function WatchPageContent() {
   }, [docId]);
 
   useEffect(() => {
-    const q = query(collection(db, "movies"), orderBy("votes", "desc"), limit(20)); // Fetch more to have enough after filtering
+    const q = query(collection(db, "movies"), orderBy("votes", "desc"), limit(20));
     const unsub = onSnapshot(q, async (snapshot) => {
       const moviesData = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -134,6 +134,13 @@ export default function WatchPageContent() {
         description: 'Could not copy the video link at this time.',
       });
     }
+  };
+
+  const handleComingSoon = () => {
+    toast({
+      title: 'Feature Coming Soon',
+      description: 'These features is coming soon date 1 1 2026',
+    });
   };
 
 
@@ -279,11 +286,11 @@ export default function WatchPageContent() {
               <Heart className="h-6 w-6"/>
               <span className="text-xs font-semibold">Like</span>
             </button>
-             <button className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
+             <button onClick={handleComingSoon} className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
               <Download className="h-6 w-6"/>
               <span className="text-xs font-semibold">Download</span>
             </button>
-             <button className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
+             <button onClick={handleComingSoon} className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
               <ListPlus className="h-6 w-6"/>
               <span className="text-xs font-semibold">My List</span>
             </button>

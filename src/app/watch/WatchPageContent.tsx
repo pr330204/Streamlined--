@@ -25,6 +25,7 @@ export default function WatchPageContent() {
   const [loading, setLoading] = useState(true);
   const [isAddMovieOpen, setAddMovieOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -72,10 +73,9 @@ export default function WatchPageContent() {
       });
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesData);
       
-      // Filter out short videos (duration < 5 minutes)
       const longVideos = moviesWithYTData.filter(m => !m.duration || m.duration >= 300);
 
-      setSuggestedMovies(longVideos.slice(0, 10)); // Limit to 10 after filtering
+      setSuggestedMovies(longVideos.slice(0, 10));
     });
 
     return () => unsub();
@@ -93,7 +93,7 @@ export default function WatchPageContent() {
         return `${ytEmbedUrl}?autoplay=1&rel=0`;
     }
     
-    return null; // For non-embeddable or live stream links
+    return null;
   }, [movie?.url]);
 
   const canPlayDirectly = useMemo(() => {
@@ -102,8 +102,12 @@ export default function WatchPageContent() {
   }, [movie?.url]);
 
   const handleWatchNow = () => {
-    if (movie?.url && !embedUrl) {
-      window.open(movie.url, '_blank', 'noopener,noreferrer');
+    if (movie?.url) {
+      if(canPlayDirectly) {
+        setShowPlayer(true);
+      } else {
+        window.open(movie.url, '_blank', 'noopener,noreferrer');
+      }
     }
   };
 
@@ -163,38 +167,55 @@ export default function WatchPageContent() {
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
       <Header onAddMovieClick={() => setAddMovieOpen(true)} />
       <main className="flex-1">
-        <div className="aspect-video overflow-hidden bg-black">
-           {isClient && canPlayDirectly ? (
-              isLiveStream(movie.url) || !embedUrl ? (
-                 <ReactPlayer
-                    key={movie.id}
-                    url={movie.url}
-                    width="100%"
-                    height="100%"
-                    playing={true}
-                    controls={true}
-                 />
-              ) : (
-                <iframe
-                  key={movie.id}
-                  width="100%"
-                  height="100%"
-                  src={embedUrl}
-                  title="Video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              )
-           ) : (
-             <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-4">
-                <p className="text-center mb-4">This video cannot be played directly here.</p>
-                <Button onClick={handleWatchNow}>
-                   Watch on original site
-                </Button>
+        {showPlayer ? (
+            <div className="aspect-video overflow-hidden bg-black">
+            {isClient && canPlayDirectly ? (
+                isLiveStream(movie.url) || !embedUrl ? (
+                    <ReactPlayer
+                        key={movie.id}
+                        url={movie.url}
+                        width="100%"
+                        height="100%"
+                        playing={true}
+                        controls={true}
+                    />
+                ) : (
+                    <iframe
+                        key={movie.id}
+                        width="100%"
+                        height="100%"
+                        src={embedUrl}
+                        title="Video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                )
+            ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-4">
+                    <p className="text-center mb-4">This video cannot be played directly here.</p>
+                    <Button onClick={() => window.open(movie.url, '_blank', 'noopener,noreferrer')}>
+                        Watch on original site
+                    </Button>
+                </div>
+            )}
             </div>
-           )}
-        </div>
+        ) : (
+            <div className="aspect-video overflow-hidden bg-black relative">
+                 <Image 
+                    src={movie.thumbnailUrl || 'https://placehold.co/1280x720.png'}
+                    alt={`Poster for ${movie.title}`}
+                    fill
+                    className="object-cover"
+                    data-ai-hint="movie poster background"
+                />
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <Button size="lg" variant="ghost" className="text-white hover:bg-white/20 hover:text-white" onClick={handleWatchNow}>
+                        <PlayCircle className="mr-2 h-12 w-12" />
+                    </Button>
+                </div>
+            </div>
+        )}
 
         <div className="p-4 space-y-4">
           <div className="flex gap-4 items-start">
@@ -219,9 +240,9 @@ export default function WatchPageContent() {
             </div>
           </div>
 
-          <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg" onClick={handleWatchNow} disabled={!!embedUrl}>
+          <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg" onClick={handleWatchNow}>
             <PlayCircle className="mr-2 h-6 w-6" />
-            Watch Now
+            {showPlayer ? 'Close Player' : 'Watch Now'}
           </Button>
 
           <div className="py-2">
@@ -258,3 +279,5 @@ export default function WatchPageContent() {
     </div>
   );
 }
+
+    

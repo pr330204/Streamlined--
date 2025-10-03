@@ -7,16 +7,28 @@ import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Load
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
+import { getYouTubeVideoId } from "@/lib/utils";
 
 interface ShortsViewerProps {
   movies: Movie[];
   onEndReached: () => void;
   isLoadingMore: boolean;
+  onVideoWatched: (videoId: string) => void;
 }
 
-export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsViewerProps) {
+export function ShortsViewer({ movies, onEndReached, isLoadingMore, onVideoWatched }: ShortsViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const playerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (movies.length > 0 && currentIndex < movies.length) {
+      const currentVideo = movies[currentIndex];
+      const videoId = getYouTubeVideoId(currentVideo.url) || currentVideo.id;
+      if (videoId) {
+        onVideoWatched(videoId);
+      }
+    }
+  }, [currentIndex, movies, onVideoWatched]);
   
   const handleNext = () => {
     if (currentIndex < movies.length - 1) {
@@ -46,9 +58,9 @@ export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsView
   if (movies.length === 0 && !isLoadingMore) {
     return (
       <div className="flex flex-col h-full items-center justify-center rounded-lg bg-black text-center p-4">
-        <h3 className="text-lg font-semibold tracking-tight">No shorts found</h3>
+        <h3 className="text-lg font-semibold tracking-tight">No new shorts</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Try adding a new video under 5 minutes.
+          You've watched all available shorts. Check back later!
         </p>
       </div>
     );

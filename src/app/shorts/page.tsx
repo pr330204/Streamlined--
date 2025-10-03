@@ -10,6 +10,7 @@ import { ShortsViewer } from "@/components/shorts-viewer";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { getYouTubeVideoId, isPlayableOrGoogleDrive } from "@/lib/utils";
+import { getHistory, addToHistory } from "@/lib/history";
 
 const PAGE_SIZE = 10;
 
@@ -23,9 +24,43 @@ export default function ShortsPage() {
   const [nextPageToken, setNextPageToken] = useState<string | undefined>(undefined);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setWatchedIds(new Set(getHistory()));
+  }, []);
+
+  const filterAndSetShorts = useCallback((newShorts: Movie[]) => {
+    const uniqueIds = new Set<string>();
+    const allUniqueShorts = [...shorts, ...newShorts].filter(movie => {
+        const videoId = getYouTubeVideoId(movie.url) || movie.id; 
+        if (videoId && !uniqueIds.has(videoId)) {
+            uniqueIds.add(videoId);
+            return true;
+        }
+        return false;
+    });
+
+    const un watchedShorts = allUniqueShorts.filter(movie => {
+        const videoId = getYouTubeVideoId(movie.url) || movie.id;
+        return !watchedIds.has(videoId);
+    });
+
+    const shortVideos = un watchedShorts.filter(movie => movie.duration && movie.duration < 300);
+
+    shortVideos.sort((a, b) => {
+        const dateA = new Date(a.createdAt as string).getTime();
+        const dateB = new Date(b.createdAt as string).getTime();
+        return dateB - dateA;
+    });
+    
+    setShorts(shortVideos);
+  }, [shorts, watchedIds]);
 
   const loadInitialShorts = useCallback(async () => {
     setLoading(true);
+    const history = getHistory();
+    setWatchedIds(new Set(history));
 
     const firstBatchQuery = query(collection(db, "movies"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
     const documentSnapshots = await getDocs(firstBatchQuery);
@@ -52,7 +87,7 @@ export default function ShortsPage() {
     const uniqueIds = new Set<string>();
     const uniqueShorts = combined.filter(movie => {
         const videoId = getYouTubeVideoId(movie.url) || movie.id; 
-        if (videoId && !uniqueIds.has(videoId)) {
+        if (videoId && !uniqueIds.has(videoId) && !history.includes(videoId)) {
             uniqueIds.add(videoId);
             return true;
         }
@@ -81,6 +116,7 @@ export default function ShortsPage() {
 
     let newMoviesFromDb: Movie[] = [];
     let newShortsFromApi: Movie[] = [];
+    const history = getHistory();
 
     if (lastVisible) {
       const nextBatchQuery = query(
@@ -119,7 +155,7 @@ export default function ShortsPage() {
             const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url) || s.id));
             const uniqueNewShorts = combined.filter(movie => {
                 const videoId = getYouTubeVideoId(movie.url) || movie.id;
-                if (videoId && !existingIds.has(videoId)) {
+                if (videoId && !existingIds.has(videoId) && !history.includes(videoId)) {
                     existingIds.add(videoId);
                     return true;
                 }
@@ -133,6 +169,12 @@ export default function ShortsPage() {
     setLoadingMore(false);
   }, [loadingMore, hasMore, lastVisible, nextPageToken]);
 
+  const handleVideoWatched = (videoId: string) => {
+    addToHistory(videoId);
+    setWatchedIds(prev => new Set(prev).add(videoId));
+    setShorts(prev => prev.filter(short => (getYouTubeVideoId(short.url) || short.id) !== videoId));
+  };
+  
   const filteredShorts = useMemo(() => {
     if (!searchQuery) {
       return shorts;
@@ -156,6 +198,7 @@ export default function ShortsPage() {
               movies={filteredShorts} 
               onEndReached={loadMoreShorts} 
               isLoadingMore={loadingMore}
+              onVideoWatched={handleVideoWatched}
             />
          )}
        </main>

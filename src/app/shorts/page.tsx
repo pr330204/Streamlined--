@@ -194,12 +194,21 @@ export default function ShortsPage() {
                 <div className="w-full max-w-sm aspect-[9/16] bg-muted rounded-lg animate-pulse"></div>
             </div>
          ) : (
-            <ShortsViewer 
-              movies={filteredShorts} 
-              onEndReached={loadMoreShorts} 
-              isLoadingMore={loadingMore}
-              onVideoWatched={handleVideoWatched}
-            />
+            filteredShorts.length > 0 ? (
+              <ShortsViewer 
+                movies={filteredShorts} 
+                onEndReached={loadMoreShorts} 
+                isLoadingMore={loadingMore}
+                onVideoWatched={handleVideoWatched}
+              />
+            ) : (
+               <div className="flex flex-col h-full items-center justify-center rounded-lg bg-black text-center p-4">
+                  <h3 className="text-lg font-semibold tracking-tight text-white">No new shorts</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    You've watched all available shorts. Check back later!
+                  </p>
+                </div>
+            )
          )}
        </main>
        <AddMovieDialog

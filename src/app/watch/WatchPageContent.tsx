@@ -119,38 +119,20 @@ export default function WatchPageContent() {
     if (!movie) return;
   
     const shareUrl = `${window.location.origin}/watch?v=${movie.id}`;
-    const shareData = {
-      title: movie.title,
-      text: `Check out this video: ${movie.title}`,
-      url: shareUrl,
-    };
   
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast({
-          title: 'Link Copied',
-          description: 'The video link has been copied to your clipboard.',
-        });
-      }
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link Copied',
+        description: 'The video link has been copied to your clipboard.',
+      });
     } catch (error) {
-      console.error('Sharing failed, falling back to clipboard:', error);
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast({
-          title: 'Link Copied',
-          description: 'Sharing failed, but the link was copied to your clipboard.',
-        });
-      } catch (copyError) {
-        console.error('Failed to copy to clipboard:', copyError);
-        toast({
-          variant: 'destructive',
-          title: 'Sharing Failed',
-          description: 'Could not share or copy the video link at this time.',
-        });
-      }
+      console.error('Failed to copy to clipboard:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Copy Failed',
+        description: 'Could not copy the video link at this time.',
+      });
     }
   };
 

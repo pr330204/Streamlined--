@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { doc, getDoc, collection, onSnapshot, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, query, orderBy, limit, Timestamp, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Movie } from '@/lib/types';
 import { Header } from '@/components/header';
@@ -11,7 +11,7 @@ import { AddMovieDialog } from '@/components/add-movie-dialog';
 import { Button } from '@/components/ui/button';
 import { Heart, Download, ListPlus, Share2, PlayCircle } from 'lucide-react';
 import { MovieList } from '@/components/movie-list';
-import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl, isLiveStream } from '@/lib/utils';
+import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl, isLiveStream, formatNumber } from '@/lib/utils';
 import Image from 'next/image';
 import AdMobBanner from '@/components/admob-banner';
 import { fetchYouTubeDataForMovies } from '@/lib/youtube';
@@ -28,6 +28,7 @@ export default function WatchPageContent() {
   const [isAddMovieOpen, setAddMovieOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
   const { toast } = useToast();
 
 
@@ -41,27 +42,28 @@ export default function WatchPageContent() {
       return;
     }
 
-    const fetchMovie = async () => {
-      setLoading(true);
-      const docRef = doc(db, 'movies', docId);
-      const docSnap = await getDoc(docRef);
+    setLoading(true);
+    const docRef = doc(db, 'movies', docId);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const movieData = { 
-          id: docSnap.id, 
-          ...data,
-          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
-        } as Movie;
-        const [movieWithYTData] = await fetchYouTubeDataForMovies([movieData]);
-        setMovie(movieWithYTData);
-      } else {
-        console.log('No such document!');
-      }
-      setLoading(false);
-    };
+    const unsub = onSnapshot(docRef, async (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const movieData = { 
+            id: docSnap.id, 
+            ...data,
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
+            } as Movie;
+            const [movieWithYTData] = await fetchYouTubeDataForMovies([movieData]);
+            setMovie(movieWithYTData);
+        } else {
+            console.log('No such document!');
+            setMovie(null);
+        }
+        setLoading(false);
+    });
 
-    fetchMovie();
+    return () => unsub();
+
   }, [docId]);
 
   useEffect(() => {
@@ -141,6 +143,28 @@ export default function WatchPageContent() {
       title: 'Feature Coming Soon',
       description: 'These features is coming soon date 1 1 2026',
     });
+  };
+
+  const handleLike = async () => {
+    if (!docId || isLiked) return;
+    const movieRef = doc(db, "movies", docId);
+    try {
+      await updateDoc(movieRef, {
+        votes: increment(1)
+      });
+      setIsLiked(true);
+       toast({
+        title: "Liked!",
+        description: "You've liked this video.",
+      });
+    } catch (error) {
+        console.error("Error liking video: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not like the video. Please try again.",
+        });
+    }
   };
 
 
@@ -282,9 +306,9 @@ export default function WatchPageContent() {
           </div>
           
           <div className="flex justify-around text-center py-2">
-            <button className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
-              <Heart className="h-6 w-6"/>
-              <span className="text-xs font-semibold">Like</span>
+            <button onClick={handleLike} disabled={isLiked} className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors disabled:cursor-not-allowed disabled:hover:text-muted-foreground">
+              <Heart className={`h-6 w-6 ${isLiked ? 'text-red-500 fill-current' : ''}`}/>
+              <span className="text-xs font-semibold">{movie.votes ? formatNumber(movie.votes) : 'Like'}</span>
             </button>
              <button onClick={handleComingSoon} className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
               <Download className="h-6 w-6"/>

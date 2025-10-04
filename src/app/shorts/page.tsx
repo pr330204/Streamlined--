@@ -8,7 +8,6 @@ import { collection, getDocs, limit, orderBy, query, startAfter, Timestamp, type
 import { fetchYouTubeDataForMovies, fetchYouTubeShorts } from "@/lib/youtube";
 import { ShortsViewer } from "@/components/shorts-viewer";
 import { Header } from "@/components/header";
-import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { getYouTubeVideoId, isPlayableOrGoogleDrive } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
@@ -16,7 +15,6 @@ const PAGE_SIZE = 10;
 export default function ShortsPage() {
   const [shorts, setShorts] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAddMovieOpen, setAddMovieOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
   const [lastVisible, setLastVisible] = useState<DocumentSnapshot | null>(null);
@@ -167,7 +165,7 @@ export default function ShortsPage() {
 
   return (
     <div className="flex h-screen w-full flex-col bg-black text-foreground">
-       <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
+       <Header onSearch={setSearchQuery} />
        <main className="flex-1">
          {loading ? (
             <div className="flex items-center justify-center h-full">
@@ -190,11 +188,6 @@ export default function ShortsPage() {
             )
          )}
        </main>
-       <AddMovieDialog
-        isOpen={isAddMovieOpen}
-        onOpenChange={setAddMovieOpen}
-        onMovieAdded={() => { loadInitialShorts() }}
-      />
     </div>
   );
 }

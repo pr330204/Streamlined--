@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Bot } from "lucide-react";
 import { Header } from "@/components/header";
-import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
 
@@ -28,7 +27,6 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [broadcasts, setBroadcasts] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isAddMovieOpen, setAddMovieOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -98,7 +96,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
-      <Header onAddMovieClick={() => setAddMovieOpen(true)} />
+      <Header />
       <main className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {allMessages.map((msg) => (
@@ -150,11 +148,6 @@ export default function ChatPage() {
           </form>
         </div>
       </main>
-      <AddMovieDialog
-        isOpen={isAddMovieOpen}
-        onOpenChange={setAddMovieOpen}
-        onMovieAdded={() => {}}
-      />
     </div>
   );
 }

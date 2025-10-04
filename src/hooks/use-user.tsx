@@ -4,7 +4,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { UsernameDialog } from '@/components/username-dialog';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import type { User } from '@/lib/types';
 
@@ -12,6 +12,8 @@ interface UserContextType {
   user: User | null;
   setUser: (name: string) => void;
   logout: () => void;
+  loading: boolean;
+  error: string | null;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -28,6 +30,7 @@ function getUserId(): string {
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUser = useCallback(async () => {
     const userId = getUserId();
@@ -62,29 +65,46 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const setUser = async (name: string) => {
+    setError(null);
+    setLoading(true);
     const userId = getUserId();
-    const newUser: User = { id: userId, name, coins: 0 };
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("name", "==", name));
+
     try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            setError("Username already exists. Please choose another one.");
+            setLoading(false);
+            return;
+        }
+
+        const newUser: User = { id: userId, name, coins: 0 };
         await setDoc(doc(db, "users", userId), { name: newUser.name, coins: newUser.coins }, { merge: true });
         setUserState(newUser);
-    } catch(error) {
-        console.error("Error saving user to Firestore: ", error);
-        setUserState(newUser);
+    } catch(err) {
+        console.error("Error saving user to Firestore: ", err);
+        setError("An error occurred. Please try again.");
+    } finally {
+        setLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     const userId = localStorage.getItem('userId');
     if (userId) {
-        // To start fresh, we remove both userId and username
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username'); // Old key, remove for cleanup
-        setUserState(null);
-        // We could also consider deleting the user doc from Firestore, but for now we'll leave it.
+        try {
+            await deleteDoc(doc(db, "users", userId));
+        } catch (err) {
+            console.error("Error deleting user from Firestore: ", err);
+        } finally {
+            localStorage.removeItem('userId');
+            setUserState(null);
+        }
     }
   };
 
-  if (loading) {
+  if (loading && !user) {
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background text-foreground">
             <p>Loading...</p>
@@ -93,7 +113,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <UserContext.Provider value={{ user, setUser, logout }}>
+    <UserContext.Provider value={{ user, setUser, logout, loading, error }}>
       {!user ? <UsernameDialog /> : children}
     </UserContext.Provider>
   );

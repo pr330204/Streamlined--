@@ -7,7 +7,6 @@ import { doc, getDoc, collection, onSnapshot, query, orderBy, limit, Timestamp, 
 import { db } from '@/lib/firebase';
 import type { Movie } from '@/lib/types';
 import { Header } from '@/components/header';
-import { AddMovieDialog } from '@/components/add-movie-dialog';
 import { Button } from '@/components/ui/button';
 import { Heart, Download, ListPlus, Share2, PlayCircle } from 'lucide-react';
 import { MovieList } from '@/components/movie-list';
@@ -25,7 +24,6 @@ export default function WatchPageContent() {
   const [movie, setMovie] = useState<Movie | null>(null);
   const [suggestedMovies, setSuggestedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAddMovieOpen, setAddMovieOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -171,7 +169,7 @@ export default function WatchPageContent() {
   if (loading) {
     return (
         <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
-            <Header onAddMovieClick={() => setAddMovieOpen(true)} />
+            <Header />
             <div className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
                 <div className="aspect-video bg-muted rounded-lg animate-pulse"></div>
                 <div className="flex gap-4">
@@ -192,7 +190,6 @@ export default function WatchPageContent() {
                   ))}
                 </div>
             </div>
-             <AddMovieDialog isOpen={isAddMovieOpen} onOpenChange={setAddMovieOpen} onMovieAdded={() => {}} />
         </div>
     );
   }
@@ -200,11 +197,10 @@ export default function WatchPageContent() {
   if (!movie) {
     return (
        <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
-         <Header onAddMovieClick={() => setAddMovieOpen(true)} />
+         <Header />
          <div className="flex-1 flex items-center justify-center">
             <p>Video not found.</p>
          </div>
-         <AddMovieDialog isOpen={isAddMovieOpen} onOpenChange={setAddMovieOpen} onMovieAdded={() => {}} />
        </div>
     );
   }
@@ -221,7 +217,7 @@ export default function WatchPageContent() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
-      <Header onAddMovieClick={() => setAddMovieOpen(true)} />
+      <Header />
       <main className="flex-1">
         {showPlayer ? (
             <div className="aspect-video overflow-hidden bg-black">
@@ -331,7 +327,6 @@ export default function WatchPageContent() {
         </div>
 
       </main>
-      <AddMovieDialog isOpen={isAddMovieOpen} onOpenChange={setAddMovieOpen} onMovieAdded={() => {}}/>
     </div>
   );
 }

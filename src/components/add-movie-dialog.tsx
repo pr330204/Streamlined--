@@ -23,12 +23,10 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { checkMovieLinkAction } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
 import type { Movie } from "@/lib/types";
-import { getYouTubeVideoId } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formSchema = z.object({
@@ -45,12 +43,8 @@ interface AddMovieDialogProps {
   onMovieAdded: (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => void;
 }
 
-const ADMIN_PASSWORD = "Prashant"; // Simple hardcoded password
-
 export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieDialogProps) {
   const [isPending, startTransition] = useTransition();
-  const [view, setView] = useState<"password" | "form">("password");
-  const [password, setPassword] = useState("");
   const [activeTab, setActiveTab] = useState("youtube");
   const { toast } = useToast();
 
@@ -66,25 +60,9 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   const handleDialogClose = (open: boolean) => {
     if (!open) {
       form.reset();
-      setPassword("");
       setActiveTab("youtube");
-      setView("password"); // Reset to password view on close
     }
     onOpenChange(open);
-  };
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setView("form");
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Incorrect Password",
-        description: "Please try again.",
-      });
-    }
-    setPassword("");
   };
 
   const onSubmit = (values: AddMovieFormValues) => {
@@ -122,34 +100,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-[425px]">
-        {view === "password" ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Admin Access</DialogTitle>
-              <DialogDescription>
-                Please enter the password to add a new video.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter admin password"
-                />
-              </div>
-              <DialogFooter>
-                 <Button type="button" variant="ghost" onClick={() => handleDialogClose(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Submit</Button>
-              </DialogFooter>
-            </form>
-          </>
-        ) : (
+        
           <>
             <DialogHeader>
               <DialogTitle>Add a New Video</DialogTitle>
@@ -288,7 +239,6 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
               </form>
             </Form>
           </>
-        )}
       </DialogContent>
     </Dialog>
   );

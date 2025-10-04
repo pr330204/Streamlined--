@@ -79,7 +79,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
-      <Header onAddMovieClick={() => setAddMovieOpen(true)} onSearch={setSearchQuery} />
+      <Header onSearch={setSearchQuery} />
       <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
         <div className="container max-w-7xl mx-auto">
           {loading ? (

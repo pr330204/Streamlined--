@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Play, Search, ArrowLeft, Mic, MicOff, Video, LogOut, Coins, ShieldCheck } from "lucide-react";
+import { Play, Search, ArrowLeft, Mic, MicOff, LogOut, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -21,7 +21,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 
 interface HeaderProps {
-  onAddMovieClick: () => void;
   onSearch?: (query: string) => void;
 }
 
@@ -29,7 +28,7 @@ interface HeaderProps {
 const SpeechRecognition =
   (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
 
-export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
+export function Header({ onSearch }: HeaderProps) {
   const [isSearchVisible, setSearchVisible] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,7 +41,8 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
   const { user, logout } = useUser();
 
   const isWatchPage = pathname === '/watch';
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
+  
+  const userInitial = user?.name ? user.name.replace(/[^a-zA-Z]/g, '').charAt(0).toUpperCase() : '?';
 
   useEffect(() => {
     setIsClient(true);
@@ -146,17 +146,6 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuItem onClick={onAddMovieClick}>
-              <Video className="mr-2 h-4 w-4" />
-              <span>Add Video</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/admin">
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                <span>Admin Panel</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
              <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>

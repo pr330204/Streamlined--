@@ -14,10 +14,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export function UsernameDialog() {
-  const { user, setUser } = useUser();
+  const { user, setUser, error, loading } = useUser();
   const [username, setUsername] = useState("");
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +52,10 @@ export function UsernameDialog() {
               autoComplete="off"
             />
           </div>
+          {error && <p className="text-destructive text-sm text-center">{error}</p>}
           <DialogFooter>
-            <Button type="submit" disabled={!username.trim()}>
+            <Button type="submit" disabled={!username.trim() || loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Continue
             </Button>
           </DialogFooter>

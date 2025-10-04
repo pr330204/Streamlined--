@@ -111,7 +111,7 @@ export default function AdminChatPanel() {
 
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] w-full flex-col bg-background text-foreground border rounded-lg">
+    <div className="flex h-[calc(100vh-8rem)] w-full flex-col bg-background text-foreground border rounded-lg">
       <main className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <div className="w-1/3 border-r flex flex-col">

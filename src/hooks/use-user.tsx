@@ -59,7 +59,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       });
       // Optimistically update local state
       setUserState(prevUser => prevUser ? { ...prevUser, coins: (prevUser.coins ?? 0) + 1 } : null);
-    }, 1000);
+    }, 300000); // 5 minutes in milliseconds
 
     return () => clearInterval(interval);
   }, [user]);

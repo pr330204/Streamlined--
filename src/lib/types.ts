@@ -15,3 +15,25 @@ export interface Movie {
   channelThumbnailUrl?: string;
   duration?: number; // Duration in seconds
 }
+
+export interface User {
+    id: string;
+    name: string;
+}
+
+export interface ChatMessage {
+    id: string;
+    text: string;
+    senderId: string;
+    senderName: string;
+    timestamp: Timestamp;
+    isBroadcast?: boolean;
+}
+
+export interface ChatThread {
+    id: string;
+    userId: string;
+    userName: string;
+    lastMessage: string;
+    lastUpdated: Timestamp;
+}

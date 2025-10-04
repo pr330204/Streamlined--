@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Play, Plus, Search, ArrowLeft, Mic, MicOff, Trash2, Video } from "lucide-react";
+import { Play, Plus, Search, ArrowLeft, Mic, MicOff, Trash2, Video, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -134,6 +134,12 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
             <span>Delete Video</span>
           </Link>
         </DropdownMenuItem>
+         <DropdownMenuItem asChild>
+          <Link href="/admin/chat">
+            <MessageSquare className="mr-2 h-4 w-4" />
+            <span>Chat Admin</span>
+          </Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -155,6 +161,12 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
           <Link href="/admin/delete">
             <Trash2 className="mr-2 h-4 w-4" />
             <span>Delete Video</span>
+          </Link>
+        </DropdownMenuItem>
+         <DropdownMenuItem asChild>
+          <Link href="/admin/chat">
+            <MessageSquare className="mr-2 h-4 w-4" />
+            <span>Chat Admin</span>
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

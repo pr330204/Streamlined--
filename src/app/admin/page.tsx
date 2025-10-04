@@ -66,7 +66,7 @@ export default function AdminPage() {
             <Tabs defaultValue="add-video" className="w-full">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-                <TabsList className="grid grid-cols-4 w-auto">
+                <TabsList>
                   <TabsTrigger value="add-video"><Video className="w-4 h-4 mr-2"/> Add Video</TabsTrigger>
                   <TabsTrigger value="delete-video"><Trash2 className="w-4 h-4 mr-2"/> Delete Video</TabsTrigger>
                   <TabsTrigger value="user-chats"><MessageSquare className="w-4 h-4 mr-2"/> User Chats</TabsTrigger>

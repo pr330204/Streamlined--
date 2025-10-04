@@ -1,35 +1,23 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { Movie } from "@/lib/types";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Music4, Loader2, ChevronUp, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { YouTubePlayer } from "./youtube-player";
-import { getYouTubeVideoId } from "@/lib/utils";
 
 interface ShortsViewerProps {
   movies: Movie[];
   onEndReached: () => void;
   isLoadingMore: boolean;
-  onVideoWatched: (videoId: string) => void;
 }
 
-export function ShortsViewer({ movies, onEndReached, isLoadingMore, onVideoWatched }: ShortsViewerProps) {
+export function ShortsViewer({ movies, onEndReached, isLoadingMore }: ShortsViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const playerRef = useRef<any>(null);
 
-  useEffect(() => {
-    if (movies.length > 0 && currentIndex < movies.length) {
-      const currentVideo = movies[currentIndex];
-      const videoId = getYouTubeVideoId(currentVideo.url) || currentVideo.id;
-      if (videoId) {
-        onVideoWatched(videoId);
-      }
-    }
-  }, [currentIndex, movies, onVideoWatched]);
-  
   const handleNext = () => {
     if (currentIndex < movies.length - 1) {
       setCurrentIndex(prev => prev + 1);

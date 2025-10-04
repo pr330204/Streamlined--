@@ -10,7 +10,6 @@ import { ShortsViewer } from "@/components/shorts-viewer";
 import { Header } from "@/components/header";
 import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { getYouTubeVideoId, isPlayableOrGoogleDrive } from "@/lib/utils";
-import { getHistory, addToHistory } from "@/lib/history";
 
 const PAGE_SIZE = 10;
 
@@ -24,11 +23,6 @@ export default function ShortsPage() {
   const [nextPageToken, setNextPageToken] = useState<string | undefined>(undefined);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    setWatchedIds(new Set(getHistory()));
-  }, []);
 
   const filterAndSetShorts = useCallback((newShorts: Movie[]) => {
     const uniqueIds = new Set<string>();
@@ -41,12 +35,7 @@ export default function ShortsPage() {
         return false;
     });
 
-    const un watchedShorts = allUniqueShorts.filter(movie => {
-        const videoId = getYouTubeVideoId(movie.url) || movie.id;
-        return !watchedIds.has(videoId);
-    });
-
-    const shortVideos = un watchedShorts.filter(movie => movie.duration && movie.duration < 300);
+    const shortVideos = allUniqueShorts.filter(movie => movie.duration && movie.duration < 300);
 
     shortVideos.sort((a, b) => {
         const dateA = new Date(a.createdAt as string).getTime();
@@ -55,12 +44,10 @@ export default function ShortsPage() {
     });
     
     setShorts(shortVideos);
-  }, [shorts, watchedIds]);
+  }, [shorts]);
 
   const loadInitialShorts = useCallback(async () => {
     setLoading(true);
-    const history = getHistory();
-    setWatchedIds(new Set(history));
 
     const firstBatchQuery = query(collection(db, "movies"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
     const documentSnapshots = await getDocs(firstBatchQuery);
@@ -87,7 +74,7 @@ export default function ShortsPage() {
     const uniqueIds = new Set<string>();
     const uniqueShorts = combined.filter(movie => {
         const videoId = getYouTubeVideoId(movie.url) || movie.id; 
-        if (videoId && !uniqueIds.has(videoId) && !history.includes(videoId)) {
+        if (videoId && !uniqueIds.has(videoId)) {
             uniqueIds.add(videoId);
             return true;
         }
@@ -116,7 +103,6 @@ export default function ShortsPage() {
 
     let newMoviesFromDb: Movie[] = [];
     let newShortsFromApi: Movie[] = [];
-    const history = getHistory();
 
     if (lastVisible) {
       const nextBatchQuery = query(
@@ -155,7 +141,7 @@ export default function ShortsPage() {
             const existingIds = new Set(prevShorts.map(s => getYouTubeVideoId(s.url) || s.id));
             const uniqueNewShorts = combined.filter(movie => {
                 const videoId = getYouTubeVideoId(movie.url) || movie.id;
-                if (videoId && !existingIds.has(videoId) && !history.includes(videoId)) {
+                if (videoId && !existingIds.has(videoId)) {
                     existingIds.add(videoId);
                     return true;
                 }
@@ -168,12 +154,6 @@ export default function ShortsPage() {
 
     setLoadingMore(false);
   }, [loadingMore, hasMore, lastVisible, nextPageToken]);
-
-  const handleVideoWatched = (videoId: string) => {
-    addToHistory(videoId);
-    setWatchedIds(prev => new Set(prev).add(videoId));
-    setShorts(prev => prev.filter(short => (getYouTubeVideoId(short.url) || short.id) !== videoId));
-  };
   
   const filteredShorts = useMemo(() => {
     if (!searchQuery) {
@@ -199,13 +179,12 @@ export default function ShortsPage() {
                 movies={filteredShorts} 
                 onEndReached={loadMoreShorts} 
                 isLoadingMore={loadingMore}
-                onVideoWatched={handleVideoWatched}
               />
             ) : (
                <div className="flex flex-col h-full items-center justify-center rounded-lg bg-black text-center p-4">
                   <h3 className="text-lg font-semibold tracking-tight text-white">No new shorts</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    You've watched all available shorts. Check back later!
+                    Check back later!
                   </p>
                 </div>
             )

@@ -1,18 +1,21 @@
 
 "use client";
 
-import { Play, Plus, Search, ArrowLeft, Mic, MicOff, Trash2, Video, MessageSquare } from "lucide-react";
+import { Play, Plus, Search, ArrowLeft, Mic, MicOff, Trash2, Video, MessageSquare, LogOut, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from 'next/navigation';
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/use-user";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
@@ -35,6 +38,7 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
+  const { user, logout } = useUser();
 
   const isWatchPage = pathname === '/watch';
 
@@ -115,64 +119,40 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
     onSearch?.(e.target.value);
   }
 
-  const AddMenu = () => (
+  const UserMenu = () => (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onAddMovieClick}>
-          <Video className="mr-2 h-4 w-4" />
-          <span>Add Video</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/admin/delete">
-            <Trash2 className="mr-2 h-4 w-4" />
-            <span>Delete Video</span>
-          </Link>
-        </DropdownMenuItem>
-         <DropdownMenuItem asChild>
-          <Link href="/admin/chat">
-            <MessageSquare className="mr-2 h-4 w-4" />
-            <span>Chat Admin</span>
-          </Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+        <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+                <UserIcon />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+            {user && <DropdownMenuLabel>Hi, {user.name}</DropdownMenuLabel>}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onAddMovieClick}>
+              <Video className="mr-2 h-4 w-4" />
+              <span>Add Video</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/delete">
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete Video</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/chat">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                <span>Chat Admin</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+             <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+            </DropdownMenuItem>
+        </DropdownMenuContent>
     </DropdownMenu>
   );
-
-  const AddMenuMobile = () => (
-     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="icon" className="rounded-full">
-            <Plus className="h-5 w-5" />
-            <span className="sr-only">Add</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onAddMovieClick}>
-          <Video className="mr-2 h-4 w-4" />
-          <span>Add Video</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/admin/delete">
-            <Trash2 className="mr-2 h-4 w-4" />
-            <span>Delete Video</span>
-          </Link>
-        </DropdownMenuItem>
-         <DropdownMenuItem asChild>
-          <Link href="/admin/chat">
-            <MessageSquare className="mr-2 h-4 w-4" />
-            <span>Chat Admin</span>
-          </Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-
 
   if (isWatchPage) {
      return (
@@ -190,8 +170,7 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
               </Link>
             </div>
             <div className="flex flex-1 items-center justify-end space-x-2">
-               <div className="hidden sm:inline-flex"><AddMenu /></div>
-               <div className="sm:hidden"><AddMenuMobile /></div>
+               <UserMenu />
             </div>
           </div>
         </header>
@@ -238,8 +217,7 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
                 <span className="sr-only">Search</span>
             </Button>
             
-            <div className="hidden sm:inline-flex"><AddMenu /></div>
-            <div className="sm:hidden"><AddMenuMobile /></div>
+            <UserMenu />
         </div>
       </div>
     </header>

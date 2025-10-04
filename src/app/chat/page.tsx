@@ -11,6 +11,8 @@ import {
   where,
   addDoc,
   serverTimestamp,
+  doc,
+  setDoc,
 } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { Button } from "@/components/ui/button";
@@ -75,17 +77,24 @@ export default function ChatPage() {
       timestamp: serverTimestamp(),
     });
 
-    // Also create the chat thread doc if it doesn't exist
-    // This is for the admin to see the list of chats
-     await addDoc(collection(db, "chats"), {
+    // Also create/update the chat thread doc for the admin view
+    await setDoc(doc(db, "chats", user.id), {
         userId: user.id,
         userName: user.name,
         lastMessage: newMessage,
         lastUpdated: serverTimestamp(),
-     });
+    }, { merge: true });
 
     setNewMessage("");
   };
+
+  if (!user) {
+    return (
+       <div className="flex min-h-screen w-full flex-col bg-background text-foreground items-center justify-center">
+         <p>Loading user...</p>
+       </div>
+    )
+  }
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">

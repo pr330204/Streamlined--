@@ -40,8 +40,8 @@ export default function AdminPage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
       <Header />
-      <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
-        <div className="container max-w-5xl mx-auto">
+      <main className="flex flex-1 flex-col px-4 py-6 md:px-6 lg:px-8">
+        <div className="container max-w-5xl mx-auto flex flex-1 flex-col">
           {!isAuthenticated ? (
             <div className="max-w-sm mx-auto pt-20">
               <h1 className="text-2xl font-bold text-center mb-2">Admin Panel</h1>
@@ -63,7 +63,7 @@ export default function AdminPage() {
               </form>
             </div>
           ) : (
-            <Tabs defaultValue="add-video" className="w-full">
+            <Tabs defaultValue="add-video" className="w-full flex flex-col flex-1">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>
                 <TabsList>
@@ -87,7 +87,7 @@ export default function AdminPage() {
               <TabsContent value="delete-video">
                 <AdminDeletePanel />
               </TabsContent>
-              <TabsContent value="user-chats">
+              <TabsContent value="user-chats" className="flex-1">
                 <AdminChatPanel />
               </TabsContent>
               <TabsContent value="user-coins">

@@ -10,19 +10,21 @@ import {
   orderBy,
   addDoc,
   serverTimestamp,
+  doc,
+  setDoc,
 } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Bot, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ChatThread, ChatMessage } from "@/lib/types";
+import type { ChatThread, ChatMessage, User } from "@/lib/types";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminChatPanel() {
   const { toast } = useToast();
 
-  const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedThread, setSelectedThread] = useState<ChatThread | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -31,16 +33,27 @@ export default function AdminChatPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const q = query(collection(db, "chats"), orderBy("lastUpdated", "desc"));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const threads = snapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as ChatThread)
+    // Fetch all users to display in the sidebar
+    const usersQuery = query(collection(db, "users"), orderBy("name", "asc"));
+    const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
+      const users = snapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as User)
       );
-      setChatThreads(threads);
+      setAllUsers(users);
     });
 
-    return () => unsub();
+    return () => unsubUsers();
   }, []);
+
+  const handleSelectUser = (user: User) => {
+    setSelectedThread({
+      id: user.id,
+      userId: user.id,
+      userName: user.name,
+      lastMessage: "", // This will be updated when a message is sent
+      lastUpdated: null, // This will be updated when a message is sent
+    });
+  };
 
   useEffect(() => {
     if (!selectedThread) {
@@ -72,12 +85,23 @@ export default function AdminChatPanel() {
     e.preventDefault();
     if (!newMessage.trim() || !selectedThread) return;
 
-    await addDoc(collection(db, "chats", selectedThread.userId, "messages"), {
+    const { userId, userName } = selectedThread;
+
+    // Add the message to the user's message subcollection
+    await addDoc(collection(db, "chats", userId, "messages"), {
       text: newMessage,
       senderId: "admin",
       senderName: "Admin",
       timestamp: serverTimestamp(),
     });
+
+    // Also create/update the chat thread doc for the admin view
+    await setDoc(doc(db, "chats", userId), {
+        userId: userId,
+        userName: userName,
+        lastMessage: newMessage,
+        lastUpdated: serverTimestamp(),
+    }, { merge: true });
 
     setNewMessage("");
   };
@@ -111,7 +135,7 @@ export default function AdminChatPanel() {
 
 
   return (
-    <div className="flex h-full w-full flex-col bg-background text-foreground border rounded-lg">
+    <div className="flex flex-1 flex-col bg-background text-foreground border rounded-lg">
       <main className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <div className="w-1/3 border-r flex flex-col">
@@ -119,15 +143,15 @@ export default function AdminChatPanel() {
                 <h2 className="text-xl font-bold flex items-center gap-2"><Users size={20} /> Conversations</h2>
             </div>
             <div className="flex-1 overflow-y-auto">
-                {chatThreads.map(thread => (
-                    <button key={thread.id} 
-                           onClick={() => setSelectedThread(thread)}
+                {allUsers.map(user => (
+                    <button key={user.id} 
+                           onClick={() => handleSelectUser(user)}
                            className={cn(
                                "w-full text-left p-4 border-b hover:bg-muted",
-                               selectedThread?.id === thread.id && "bg-muted"
+                               selectedThread?.userId === user.id && "bg-muted"
                            )}>
-                        <p className="font-semibold">{thread.userName}</p>
-                        <p className="text-sm text-muted-foreground truncate">{thread.lastMessage}</p>
+                        <p className="font-semibold">{user.name}</p>
+                        {/* Optionally, you could fetch last message here if needed */}
                     </button>
                 ))}
             </div>
@@ -211,3 +235,5 @@ export default function AdminChatPanel() {
     </div>
   );
 }
+
+    

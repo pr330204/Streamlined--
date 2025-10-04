@@ -139,7 +139,7 @@ export default function WatchPageContent() {
   const handleComingSoon = () => {
     toast({
       title: 'Feature Coming Soon',
-      description: 'These features is coming soon date 1 1 2026',
+      description: 'This feature will be available on 01/01/2026.',
     });
   };
 

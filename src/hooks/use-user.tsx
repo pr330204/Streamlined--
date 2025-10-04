@@ -4,13 +4,9 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { UsernameDialog } from '@/components/username-dialog';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid'; // I will add this dependency
-
-interface User {
-  id: string;
-  name: string;
-}
+import { doc, setDoc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
+import type { User } from '@/lib/types';
 
 interface UserContextType {
   user: User | null;
@@ -39,34 +35,53 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-      setUserState({ id: userId, name: userSnap.data().name });
+      const userData = userSnap.data() as Omit<User, 'id'>;
+      setUserState({ id: userId, ...userData });
     }
     setLoading(false);
   }, []);
-
 
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
 
+  // Coin increment effect
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(async () => {
+      const userRef = doc(db, "users", user.id);
+      await updateDoc(userRef, {
+        coins: increment(1)
+      });
+      // Optimistically update local state
+      setUserState(prevUser => prevUser ? { ...prevUser, coins: (prevUser.coins ?? 0) + 1 } : null);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   const setUser = async (name: string) => {
     const userId = getUserId();
-    const newUser = { id: userId, name };
+    const newUser: User = { id: userId, name, coins: 0 };
     try {
-        await setDoc(doc(db, "users", userId), { name });
+        await setDoc(doc(db, "users", userId), { name: newUser.name, coins: newUser.coins }, { merge: true });
         setUserState(newUser);
     } catch(error) {
         console.error("Error saving user to Firestore: ", error);
-        // Fallback to local state if firestore fails
         setUserState(newUser);
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('userId');
-    setUserState(null);
-    // We don't remove the localStorage 'username' because we want to start fresh with a new ID
-    localStorage.removeItem('username');
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+        // To start fresh, we remove both userId and username
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username'); // Old key, remove for cleanup
+        setUserState(null);
+        // We could also consider deleting the user doc from Firestore, but for now we'll leave it.
+    }
   };
 
   if (loading) {

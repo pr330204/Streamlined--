@@ -1,34 +1,25 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db } from "@/lib/firebase";
 import {
   collection,
   onSnapshot,
   query,
   orderBy,
-  doc,
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { useUser } from "@/hooks/use-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Send, Bot, Users } from "lucide-react";
-import { Header } from "@/components/header";
-import { AddMovieDialog } from "@/components/add-movie-dialog";
 import { cn } from "@/lib/utils";
 import type { ChatThread, ChatMessage } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
-const ADMIN_PASSWORD = "Prashant";
-
-export default function AdminChatPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
+export default function AdminChatPanel() {
   const { toast } = useToast();
 
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
@@ -36,13 +27,10 @@ export default function AdminChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [broadcastMessage, setBroadcastMessage] = useState("");
-  const [isAddMovieOpen, setAddMovieOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-
     const q = query(collection(db, "chats"), orderBy("lastUpdated", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const threads = snapshot.docs.map(
@@ -52,13 +40,13 @@ export default function AdminChatPage() {
     });
 
     return () => unsub();
-  }, [isAuthenticated]);
+  }, []);
 
   useEffect(() => {
     if (!selectedThread) {
       setMessages([]);
       return;
-    };
+    }
 
     const q = query(
       collection(db, "chats", selectedThread.userId, "messages"),
@@ -79,20 +67,6 @@ export default function AdminChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Incorrect Password",
-        description: "Please try again.",
-      });
-    }
-    setPassword("");
-  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,45 +109,9 @@ export default function AdminChatPage() {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-        <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
-        <Header onAddMovieClick={() => setAddMovieOpen(true)} />
-        <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
-            <div className="container max-w-md mx-auto pt-10">
-              <h1 className="text-2xl font-bold text-center mb-2">Admin Chat</h1>
-              <p className="text-muted-foreground text-center mb-6">
-                Please enter the password to access the chat dashboard.
-              </p>
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter admin password"
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Access Dashboard
-                </Button>
-              </form>
-            </div>
-        </main>
-        <AddMovieDialog
-            isOpen={isAddMovieOpen}
-            onOpenChange={setAddMovieOpen}
-            onMovieAdded={() => {}}
-        />
-        </div>
-    );
-  }
 
   return (
-    <div className="flex h-screen w-full flex-col bg-background text-foreground">
-      <Header onAddMovieClick={() => setAddMovieOpen(true)} />
+    <div className="flex h-[calc(100vh-12rem)] w-full flex-col bg-background text-foreground border rounded-lg">
       <main className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <div className="w-1/3 border-r flex flex-col">
@@ -195,7 +133,7 @@ export default function AdminChatPage() {
             </div>
              <div className="p-4 border-t">
                 <form onSubmit={handleSendBroadcast} className="space-y-2">
-                    <Label htmlFor="broadcast">Send Broadcast to All</Label>
+                    <label htmlFor="broadcast" className="text-sm font-medium">Send Broadcast to All</label>
                     <Textarea 
                         id="broadcast"
                         value={broadcastMessage}
@@ -225,7 +163,7 @@ export default function AdminChatPage() {
                     )}
                   >
                      {msg.senderId !== "admin" && (
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs">
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
                           {msg.senderName?.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -270,11 +208,6 @@ export default function AdminChatPage() {
           )}
         </div>
       </main>
-      <AddMovieDialog
-        isOpen={isAddMovieOpen}
-        onOpenChange={setAddMovieOpen}
-        onMovieAdded={() => {}}
-      />
     </div>
   );
 }

@@ -19,6 +19,7 @@ export interface Movie {
 export interface User {
     id: string;
     name: string;
+    coins: number;
 }
 
 export interface ChatMessage {

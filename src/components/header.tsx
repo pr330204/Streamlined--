@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Play, Plus, Search, ArrowLeft, Mic, MicOff, Trash2, Video, MessageSquare, LogOut, User as UserIcon } from "lucide-react";
+import { Play, Search, ArrowLeft, Mic, MicOff, Video, LogOut, Coins, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -17,6 +17,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 
 interface HeaderProps {
   onAddMovieClick: () => void;
@@ -33,7 +35,6 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isClient, setIsClient] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -41,6 +42,7 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
   const { user, logout } = useUser();
 
   const isWatchPage = pathname === '/watch';
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
 
   useEffect(() => {
     setIsClient(true);
@@ -122,27 +124,36 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
   const UserMenu = () => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-                <UserIcon />
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">
+                  {userInitial}
+                </AvatarFallback>
+              </Avatar>
             </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-            {user && <DropdownMenuLabel>Hi, {user.name}</DropdownMenuLabel>}
-            <DropdownMenuSeparator />
+        <DropdownMenuContent align="end" className="w-56">
+            {user && (
+              <>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Hi, {user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground flex items-center">
+                       <Coins className="mr-1 h-3 w-3 text-yellow-500" /> {user.coins ?? 0} Coins
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={onAddMovieClick}>
               <Video className="mr-2 h-4 w-4" />
               <span>Add Video</span>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/admin/delete">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete Video</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/admin/chat">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                <span>Chat Admin</span>
+              <Link href="/admin">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>Admin Panel</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -170,7 +181,7 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
               </Link>
             </div>
             <div className="flex flex-1 items-center justify-end space-x-2">
-               <UserMenu />
+               {user && <UserMenu />}
             </div>
           </div>
         </header>
@@ -192,7 +203,6 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
                 <div className="relative">
                     {isSearchVisible && <Button size="icon" variant="ghost" className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 sm:hidden" onClick={handleSearchToggle}><ArrowLeft/></Button>}
                     <Input 
-                        ref={searchInputRef}
                         type="search" 
                         placeholder="Search videos..."
                         className={`w-full bg-muted/40 pr-10 ${isSearchVisible ? 'pl-10 sm:pl-3' : ''}`}
@@ -217,7 +227,7 @@ export function Header({ onAddMovieClick, onSearch }: HeaderProps) {
                 <span className="sr-only">Search</span>
             </Button>
             
-            <UserMenu />
+            {user && <UserMenu />}
         </div>
       </div>
     </header>
